@@ -1,0 +1,2356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#202930" />
+<meta name="description" content="20-20-20 breaks, outdoor time and a prescription log. Offline, no account." />
+<title>vis</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="manifest" href="manifest.webmanifest" />
+
+<!--
+  Theme tokens are Helth's selene (dark) and selene-day (light), copied from
+  Helth/css/palettes.css under names that say what they are for here. Dark is
+  also :root, so the page is correct before any script runs.
+-->
+<style>
+:root, html[data-theme="selene"] {
+  color-scheme: dark;
+  --page: #202930;          /* bg0 */
+  --surface: #30383E;       /* bg1 */
+  --rail: #0E1216;          /* wh-bg-deep */
+  --ink-strong: #F6F7F8;    /* fg0 */
+  --ink: #ECEFF1;           /* fg1 */
+  --muted: #96A2A8;         /* fg4 */
+  --accent: #CFD8DC;        /* primary */
+  --accent-soft: rgba(207,216,220,.16);
+  --line: rgba(150,162,168,.16);
+  --line-2: rgba(150,162,168,.30);
+  --warn: #F0A038;          /* yellow */
+  --warn-rgb: 240,160,56;
+}
+html[data-theme="selene-day"] {
+  color-scheme: light;
+  --page: #E5E9EB;          /* bg0 */
+  --surface: #F3F5F6;       /* wh-bg-deep: cards sit lighter than the page in daylight */
+  --rail: #D5D9DB;          /* bg1 */
+  --ink-strong: #13171A;
+  --ink: #262E33;
+  --muted: #525E65;
+  --accent: #455A64;
+  --accent-soft: rgba(69,90,100,.16);
+  --line: rgba(82,94,101,.16);
+  --line-2: rgba(82,94,101,.30);
+  --warn: #825500;
+  --warn-rgb: 130,85,0;
+}
+
+* { box-sizing: border-box; }
+/* A class that sets display (.row, .backfill) must not beat the attribute. */
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+h1, h2 { color: var(--ink-strong); margin: 0; line-height: 1.25; }
+h1 { font-size: 26px; font-weight: 650; }
+h2 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+p { margin: 0; }
+code { font-size: 13px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app { display: flex; min-height: 100vh; }
+
+/* Sidebar on a laptop, bottom bar on a phone. */
+.nav {
+  flex: none; width: 212px;
+  position: sticky; top: 0; height: 100vh;
+  background: var(--rail);
+  border-right: 1px solid var(--line);
+  padding: 20px 12px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 12px 18px;
+  color: var(--ink-strong); font-weight: 650; font-size: 18px;
+}
+.brand img { width: 28px; height: 28px; }
+.nav a {
+  display: block; padding: 9px 12px; border-radius: 8px;
+  color: var(--muted); text-decoration: none; font-weight: 500;
+}
+.nav a:hover { color: var(--ink); background: var(--line); }
+.nav a[aria-current="page"] { color: var(--ink-strong); background: var(--accent-soft); }
+
+/* Content is centred in the space beside the sidebar, never pinned left. */
+main { flex: 1; min-width: 0; padding: 36px 40px 48px; }
+.wrap { max-width: 1080px; margin: 0 auto; }
+
+.head { margin-bottom: 24px; }
+.sub { color: var(--muted); margin-top: 4px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
+}
+.card p { color: var(--muted); }
+.tag {
+  font-size: 12px; color: var(--muted);
+  border: 1px solid var(--line-2); border-radius: 999px; padding: 1px 9px;
+}
+
+.banners:empty { display: none; }
+.banners { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.banner {
+  background: rgba(var(--warn-rgb), .14);
+  border-left: 3px solid var(--warn);
+  border-radius: 6px; padding: 10px 14px; color: var(--ink);
+}
+.note, .card .note { color: var(--warn); margin-top: 6px; }
+
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg label {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 12px;
+}
+.seg label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); color: var(--ink-strong); }
+.seg input { accent-color: var(--accent); margin: 0; }
+select, input[type="time"] {
+  font: inherit; color: var(--ink); background: var(--page);
+  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px;
+}
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--muted); }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--ink); }
+.check input { accent-color: var(--accent); margin: 0; width: 16px; height: 16px; flex: none; }
+
+.btn {
+  font: inherit; font-weight: 600; cursor: pointer;
+  color: var(--page); background: var(--accent);
+  border: 1px solid var(--accent); border-radius: 8px; padding: 7px 14px;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { color: var(--ink); background: transparent; border-color: var(--line-2); }
+.btn.ghost:hover { background: var(--line); filter: none; }
+
+/* Check-in: three rows of 0–3. The radio is hidden visually but stays the
+   focusable control, so arrow keys and screen readers work as normal. */
+.ci { display: flex; flex-direction: column; gap: 10px; }
+.sym { display: flex; align-items: center; gap: 12px; }
+.sym-name { width: 76px; color: var(--ink); }
+.seg.num label { position: relative; width: 38px; justify-content: center; padding: 5px 0; font-variant-numeric: tabular-nums; }
+.seg.num input { position: absolute; opacity: 0; pointer-events: none; }
+.seg.num label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Solid, not the settings tint: the chosen score is the thing being read back. */
+.seg.num label:has(input:checked) { background: var(--accent); color: var(--page); }
+.ci .btn { align-self: flex-start; margin-top: 4px; }
+.backfill { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.backfill strong { color: var(--ink-strong); }
+
+.count strong {
+  font-size: 34px; font-weight: 650; line-height: 1; margin-right: 4px;
+  color: var(--ink-strong); font-variant-numeric: tabular-nums;
+}
+
+/* Streak calendar: last week and this one, Monday first. Every day prints
+   its break count and a check-in dot, so the raw numbers sit beside each
+   verdict. */
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; align-self: stretch; margin: 0; padding: 0; list-style: none; }
+.cal-head { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: -6px; }
+.cal li {
+  height: 42px; border-radius: 6px; border: 1px solid var(--line-2); color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 13px; font-variant-numeric: tabular-nums;
+}
+.cal li::after { content: ""; width: 6px; height: 6px; border-radius: 50%; border: 1px solid currentColor; }
+.cal li.ci::after { background: currentColor; }
+.cal li.blank { border-color: transparent; }
+.cal li.blank::after { display: none; }
+.cal li.open { color: var(--ink); }
+.cal li.now { outline: 2px solid var(--ink-strong); outline-offset: 1px; }
+.cal .done, .sw.done { background: var(--accent); border-color: var(--accent); color: var(--page); }
+.cal .grace, .sw.grace { border: 1px dashed var(--warn); color: var(--warn); }
+.cal .off, .sw.off { background: var(--line); border-color: transparent; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; }
+.legend span { display: flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line-2); }
+
+/* Bottom-right on a laptop; full width above the bottom bar on a phone. */
+.toasts {
+  position: fixed; z-index: 20; right: 20px; bottom: 20px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  max-width: min(400px, calc(100vw - 32px));
+}
+.toast {
+  margin: 0; padding: 10px 14px;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-2); border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.28);
+}
+.toast.rem { border-left: 3px solid var(--warn); display: flex; flex-direction: column; gap: 8px; }
+.toast.rem strong { color: var(--ink-strong); }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+dialog.look {
+  width: min(420px, calc(100vw - 32px)); padding: 32px 28px;
+  background: var(--surface); color: var(--ink); text-align: center;
+  border: 1px solid var(--line-2); border-radius: 16px;
+}
+dialog.look::backdrop { background: rgba(0,0,0,.6); }
+dialog.look .sub { margin: 0 0 20px; }
+.secs {
+  font-size: 96px; font-weight: 650; line-height: 1; margin: 18px 0 14px;
+  color: var(--ink-strong); font-variant-numeric: tabular-nums;
+}
+
+/* Outdoor. The timer and the +15 are thumb targets on a phone. */
+progress { width: 100%; height: 10px; accent-color: var(--accent); align-self: stretch; }
+.btn.big { padding: 14px 22px; font-size: 17px; }
+.btn.sm { padding: 3px 10px; font-size: 13px; }
+.od-acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.card .od-clock { margin: 0; font-size: 44px; font-weight: 650; line-height: 1.1; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.od-list { list-style: none; margin: 0; padding: 0; align-self: stretch; display: flex; flex-direction: column; gap: 8px; }
+.od-list li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; color: var(--ink); }
+.od-list .when { color: var(--muted); font-variant-numeric: tabular-nums; }
+.od-list .btn { margin-left: auto; }
+.od-review { display: flex; flex-direction: column; gap: 8px; align-self: stretch; }
+input[type="number"] {
+  font: inherit; color: var(--ink); background: var(--page); width: 6em;
+  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px;
+}
+#runBanner, #syncBanner { margin-bottom: 20px; }
+#odTarget { align-self: stretch; }
+#odTarget p + p { margin-top: 10px; }
+
+/* Exercises. Every colour is a token, so both themes follow. */
+/* Browser-default link blue is unreadable on the dark page and off-palette on the light one. */
+main a { color: var(--accent); text-underline-offset: 2px; }
+.lede { color: var(--muted); margin-top: 4px; max-width: 62ch; }
+.ex-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tag.on { color: var(--ink); border-color: var(--accent); }
+.ex-steps { margin: 0; padding-left: 20px; color: var(--muted); }
+.ex-steps li { margin: 2px 0; }
+.ex-src { font-size: 13px; }
+.ex-foot { display: flex; align-items: center; gap: 12px; margin-top: auto; padding-top: 4px; }
+.ex-card { align-items: stretch; }
+.ex-card .ex-foot .btn { align-self: auto; }
+dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
+.ex-stage { height: 200px; display: flex; align-items: center; justify-content: center; margin: 4px 0 8px; }
+.ex-cue { color: var(--ink); min-height: 3.1em; margin-bottom: 14px; }
+.ex-acts { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.ring {
+  width: 160px; height: 160px; border-radius: 50%; border: 2px solid var(--line-2);
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  color: var(--muted); font-weight: 600;
+}
+.ring.on { background: var(--accent); border-color: var(--accent); color: var(--page); }
+.pair { display: flex; gap: 20px; }
+.pair .ring { width: 104px; height: 104px; font-size: 13px; }
+.fig8 { width: 100%; max-width: 340px; }
+.fig8 path { fill: none; stroke: var(--line-2); stroke-width: 2; }
+.fig8 circle { fill: var(--accent); }
+.orbit { position: relative; width: 180px; height: 180px; border: 2px solid var(--line-2); border-radius: 50%; }
+.orbit i { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--accent); }
+
+/* Rx. The table is fixed-layout so four columns of inputs fit a 390 px phone. */
+.rx-form { display: flex; flex-direction: column; gap: 10px; align-self: stretch; }
+input[type="date"] {
+  font: inherit; color: var(--ink); background: var(--page);
+  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px;
+}
+.rx-tbl { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.rx-tbl th { font-weight: 500; font-size: 13px; color: var(--muted); text-align: left; padding: 2px 6px 2px 0; }
+.rx-tbl thead th:first-child { width: 64px; }
+.rx-tbl th span { display: block; font-size: 11px; }
+.rx-tbl td { padding: 3px 6px 3px 0; }
+.rx-tbl input { width: 100%; }
+.card .hint { font-size: 13px; }
+.rx-err { margin: 0; padding-left: 18px; }
+/* Two columns, not three: five cards in three columns strand an empty cell
+   beside the form and beside the exam list. */
+.rx-cards { grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+@media (max-width: 760px) { .rx-cards { grid-template-columns: 1fr; } }
+.rx-wide { grid-column: 1 / -1; align-items: stretch; }
+#rxChart svg { display: block; width: 100%; height: auto; }
+.rx-grid { stroke: var(--line); }
+.rx-axis { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.rx-od { stroke: var(--accent); fill: var(--accent); }
+.rx-os { stroke: var(--warn); fill: var(--warn); }
+.rx-line { fill: none; stroke-width: 2; }
+.rx-line.rx-os { stroke-dasharray: 6 4; }
+.rx-band { stroke: none; opacity: .22; }
+.rx-key { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
+.rx-key i { display: inline-block; width: 22px; height: 0; border-top: 2px solid var(--accent); vertical-align: middle; margin-right: 6px; }
+.rx-key i.os { border-top: 2px dashed var(--warn); }
+.rx-sum { margin: 0; padding-left: 18px; color: var(--ink); }
+.rx-sum li + li { margin-top: 6px; }
+.od-list .btn + .btn { margin-left: 0; }
+.rx-eyes { flex-basis: 100%; font-variant-numeric: tabular-nums; }
+.rx-alarm { border-left: 3px solid var(--warn); }
+#rxWarn { align-self: stretch; }
+#rxWarn p + p { margin-top: 10px; }
+#rxWarn strong { color: var(--ink-strong); }
+
+/* Facts. One wide card, then three across. Three cards in auto-fit columns
+   would leave an empty cell beside the third, so the count is fixed, and it
+   drops to one column before the three get narrow. */
+.facts-cards { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 1100px) { .facts-cards { grid-template-columns: 1fr; } }
+.facts strong { color: var(--ink-strong); }
+.nw { white-space: nowrap; }
+.facts h3 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--ink-strong); }
+.facts-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 760px) { .facts-split { grid-template-columns: 1fr; } }
+
+/* Symptoms vs breaks: one wide card under the three, so a hidden card (before
+   14 check-ins) leaves no empty cell in the grid above it. */
+.cmp { margin-top: 16px; }
+.cmp[hidden] { display: none; }
+.cmp-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-self: stretch; width: 100%; }
+@media (max-width: 760px) { .cmp-body { grid-template-columns: 1fr; } }
+.cmp-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.cmp-tbl th, .cmp-tbl td { padding: 6px 4px; text-align: right; border-bottom: 1px solid var(--line); }
+.cmp-tbl th:first-child, .cmp-tbl td:first-child { text-align: left; }
+.cmp-tbl thead th { font-weight: 600; color: var(--ink-strong); vertical-align: bottom; }
+.cmp-tbl tbody th { font-weight: 400; color: var(--muted); }
+.cmp-tbl td { color: var(--ink-strong); }
+.cmp-text { display: flex; flex-direction: column; gap: 10px; }
+.cmp-text strong { color: var(--ink-strong); }
+
+/* Sync. Full width under the other settings, fields beside the status, so
+   adding it can't leave an empty cell in the auto-fit grid above. */
+/* Settings: five cards in auto-fit columns left an empty cell beside the
+   fifth at 1500 and 1920 px (pre-existing, found in B10). Fixed three across
+   with Storage spanning two, one column before the three get narrow, as Facts does. */
+.settings-cards { grid-template-columns: repeat(3, 1fr); }
+.settings-cards .storage-card { grid-column: span 2; }
+@media (max-width: 1100px) {
+  .settings-cards { grid-template-columns: 1fr; }
+  .settings-cards .storage-card { grid-column: auto; }
+}
+.sync-line { color: var(--muted); font-size: 13px; text-align: right; margin: -12px 0 12px; }
+.sync-card { grid-column: 1 / -1; }
+.sync-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-self: stretch; width: 100%; }
+@media (max-width: 760px) { .sync-body { grid-template-columns: 1fr; } }
+.sync-fields, .sync-side { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; min-width: 0; }
+.sync-fields label.lbl { color: var(--ink); font-weight: 500; margin-bottom: -6px; }
+.sync-fields input.field {
+  font: inherit; color: var(--ink); background: var(--page); width: 100%;
+  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px;
+}
+.sync-result { color: var(--ink); }
+.sync-result.bad { color: var(--warn); }
+.card p.sync-result { color: var(--ink); }
+.card p.sync-result.bad { color: var(--warn); }
+.card p.sync-result:empty { display: none; }
+.storage-card .row { margin: 8px 0; }
+.card h3 { margin: 14px 0 0; font-size: 14px; font-weight: 600; color: var(--ink-strong); }
+.btn:disabled { opacity: .5; cursor: default; filter: none; }
+
+@media (max-width: 760px) {
+  .app { display: block; }
+  .nav {
+    position: fixed; z-index: 10; inset: auto 0 0 0;
+    width: auto; height: auto;
+    flex-direction: row; gap: 0;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    border-right: 0; border-top: 1px solid var(--line);
+  }
+  .brand { display: none; }
+  /* Content-sized cells: equal cells pack "Exercises" edge to edge into "Outdoor". */
+  .nav a { flex: 1 1 auto; text-align: center; font-size: 12px; padding: 10px 2px; }
+  main { padding: 20px 16px 96px; }
+  h1 { font-size: 22px; }
+  .toasts { left: 16px; right: 16px; bottom: calc(64px + env(safe-area-inset-bottom)); max-width: none; align-items: stretch; }
+}
+</style>
+
+<script src="logic.js"></script>
+<!--
+  Stamp the theme before first paint. The main script runs at the end of the
+  body, by which time a light-theme user would have seen a dark flash. If
+  storage is blocked or unreadable, the preference falls back to "system".
+-->
+<script>
+(function () {
+  "use strict";
+  var pref;
+  try { pref = JSON.parse(localStorage.getItem("vis.v1")).settings.theme; } catch (e) {}
+  document.documentElement.setAttribute("data-theme",
+    Vis.logic.themeId(pref, matchMedia("(prefers-color-scheme: dark)").matches));
+})();
+</script>
+</head>
+
+<body>
+<div class="app">
+
+<nav class="nav" aria-label="Sections">
+  <div class="brand"><img src="icon.svg" alt="" />vis</div>
+  <a href="#today">Today</a>
+  <a href="#exercises">Exercises</a>
+  <a href="#outdoor">Outdoor</a>
+  <a href="#rx">Rx</a>
+  <a href="#facts">Facts</a>
+  <a href="#settings">Settings</a>
+</nav>
+
+<main>
+<div class="wrap">
+  <!-- Shown on every view while the outdoor timer runs, so a forgotten start is never out of sight. -->
+  <p class="banner" id="runBanner" hidden>Outdoor timer running since <span id="runSince"></span>, <span id="runFor"></span>. <a href="#outdoor">Open</a></p>
+  <p class="sync-line" id="syncLine" hidden></p>
+  <!-- A failed sync says how old the last good one is, on every view. Never a fresh-looking "synced" line. -->
+  <p class="banner" id="syncBanner" hidden></p>
+  <div class="banners" id="banners" role="status"></div>
+
+  <section data-view="today">
+    <div class="head">
+      <h1>Today</h1>
+      <p class="sub" id="todayDate"></p>
+      <p class="note" id="rolloverNote" hidden></p>
+    </div>
+    <p class="banner" id="examBanner" hidden></p>
+    <div class="banner backfill" id="ciBanner" hidden>
+      <span>The check-in is for <strong id="ciBannerDay"></strong>. Breaks still log to today.</span>
+      <button type="button" class="btn ghost" id="ciBack">Back to today</button>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h2>Breaks</h2>
+        <p class="count"><strong id="breakCount">0</strong> <span id="breakCountLabel">breaks today</span></p>
+        <p id="breakOff">Reminders are off on this device. <a href="#settings">Turn them on in Settings</a>.</p>
+        <p id="breakOn" hidden></p>
+        <p class="note" id="breakInWindow" hidden>Reminders show inside this window only, so keep it where you can see it.</p>
+        <button type="button" class="btn" id="lookNow">Look away for 20 s</button>
+      </div>
+      <div class="card">
+        <h2>Check-in</h2>
+        <p class="sub" id="ciFor"></p>
+        <p id="ciScale">From 0 (none) to 3 (severe).</p>
+        <form class="ci" id="ci" novalidate>
+          <!-- one row per symptom, built from logic.SYMPTOMS -->
+          <button type="submit" class="btn" id="ciSave">Save check-in</button>
+        </form>
+        <p class="note" id="ciMissing" hidden>Rate all three first. An unrated symptom is never saved as 0.</p>
+        <p id="ciState"></p>
+        <div class="row" id="ciYest"><span id="ciYestText"></span><button type="button" class="btn ghost" id="ciYestBtn"></button></div>
+        <p id="ciNudgeLine"></p>
+      </div>
+      <div class="card">
+        <h2>Streak</h2>
+        <p class="count"><strong id="streakNum">0</strong> <span id="streakLabel">desk days in a row</span></p>
+        <p id="streakToday"></p>
+        <p class="note" id="streakGrace" hidden></p>
+        <div class="cal cal-head" aria-hidden="true"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+        <ol class="cal" id="streakCal" aria-label="Last week and this week, Monday first"></ol>
+        <p class="legend"><span><span class="sw done"></span>done</span><span><span class="sw grace"></span>forgiven</span><span><span class="sw"></span>missed</span><span><span class="sw off"></span>not a desk day</span></p>
+        <p id="streakRule"></p>
+      </div>
+    </div>
+    <div class="card cmp" id="cmpCard" hidden>
+      <h2>Symptoms and breaks</h2>
+      <div class="cmp-body">
+        <table class="cmp-tbl" id="cmpTbl"></table>
+        <div class="cmp-text" id="cmpText"></div>
+      </div>
+    </div>
+  </section>
+
+  <section data-view="exercises" hidden>
+    <div class="head">
+      <h1>Exercises</h1>
+      <p class="lede">None of these is shown to lower your prescription. Each tag says how much evidence there is for the exercise itself. A finished run is logged, but it is not a break and does not count toward the streak.</p>
+      <p class="lede ex-src">On myopia: the American Academy of Ophthalmology says "there is no scientific evidence to suggest that eye exercises, vitamins or pills can prevent or cure myopia" (<em>Nearsightedness: What Is Myopia?</em>, 12 Jan 2026). A 2024 meta-analysis of 11 controlled trials
+        (<a href="https://doi.org/10.1038/s41433-023-02739-x" rel="noopener">Lin et al., Eye</a>; full text read) has one pooled result favouring exercise, a "protective/mitigating effect" with risk ratio 0.40 (95% CI 0.23–0.71).
+        Three of its seven studies counted eyes, not people, without allowing for two eyes belonging to one person. Without them it is 0.53 (95% CI 0.18–1.59, P = 0.26), no longer significant.
+        Refractive error did not differ (SMD −1.74, 95% CI −6.27 to 2.79), no study measured eye length, and all but one study was of children.
+        The authors conclude that eye exercises have "limited to no efficacy in preventing or controlling myopia progression".</p>
+    </div>
+    <div class="cards" id="exCards"></div>
+  </section>
+
+  <section data-view="outdoor" hidden>
+    <div class="head"><h1>Outdoor</h1><p class="sub" id="odDate"></p></div>
+    <div class="cards">
+      <div class="card">
+        <h2>Today</h2>
+        <p class="count"><strong id="odTotal">0</strong> <span id="odOf"></span></p>
+        <progress id="odBar" aria-label="Outdoor minutes today, target 120"></progress>
+        <p id="odSplit"></p>
+        <p class="od-clock" id="odClock" hidden></p>
+        <p id="odRunNote" hidden></p>
+        <div class="od-acts">
+          <button type="button" class="btn big" id="odToggle">Start timer</button>
+          <button type="button" class="btn big ghost" id="odQuick"></button>
+        </div>
+        <p id="odQuickNote"></p>
+        <form class="od-review" id="odReview" hidden novalidate>
+          <p class="note" id="odReviewText"></p>
+          <label class="row" for="odMins">Minutes you were outside <input type="number" id="odMins" min="1" step="1" inputmode="numeric" /></label>
+          <p class="note" id="odReviewErr" hidden></p>
+          <div class="od-acts">
+            <button type="submit" class="btn">Log these minutes</button>
+            <button type="button" class="btn ghost" id="odDiscard">Discard the timer</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Logged today</h2>
+        <ul class="od-list" id="odList"></ul>
+        <p id="odListEmpty">Nothing logged today.</p>
+      </div>
+      <div class="card">
+        <h2>The 2 h target</h2>
+        <!-- Verified 2026-10-12 against abstracts and one repost of the Chinese plan, not from memory. -->
+        <div id="odTarget">
+          <p><strong>This is a children's figure, and it was set to stop myopia starting, not to slow it.</strong>
+          China's 2018 national plan (教体艺〔2018〕3号) says children should get more than 2 hours of outdoor activity a day.
+          The best trial, <a href="https://doi.org/10.1001/jama.2015.10803" rel="noopener">He et al., JAMA 2015</a>, added 40 minutes of outdoor class a day for 3 years:
+          30.4% of first-graders who were not myopic at the start became myopic, against 39.5% without the extra time.</p>
+          <p><strong>For someone already myopic the evidence is weak.</strong>
+          A <a href="https://doi.org/10.1111/aos.13403" rel="noopener">2017 meta-analysis (Xiong et al.)</a> found no effect of outdoor time on progression in eyes that were already myopic.
+          A <a href="https://doi.org/10.1002/14651858.CD013549.pub2" rel="noopener">2024 Cochrane review (Kido et al.)</a> says it is uncertain whether more time outdoors reduces progression.
+          No trial of outdoor time in adults was found, only observational studies.</p>
+          <p>Treat 2 h as something to aim for, not a dose shown to work for an adult. This page counts your time and promises no result.
+          The trials were read as abstracts, and the Chinese plan through a repost.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section data-view="rx" hidden>
+    <div class="head">
+      <h1>Rx</h1>
+      <p class="lede">One entry per eye exam, copied from the slip. Prescriptions stay in this browser's storage and never go into the app's code.</p>
+    </div>
+    <div class="cards rx-cards">
+      <div class="card">
+        <h2 id="rxFormTitle">Log an exam</h2>
+        <form class="rx-form" id="rxForm" novalidate>
+          <label class="row" for="rxDay">Exam date <input type="date" id="rxDay" /></label>
+          <table class="rx-tbl">
+            <thead><tr><th></th><th scope="col">Sphere</th><th scope="col">Cylinder</th><th scope="col">Axis</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Right <span>OD</span></th>
+                <td><input type="number" step="0.25" data-rx="od.sph" aria-label="Right eye sphere" /></td>
+                <td><input type="number" step="0.25" data-rx="od.cyl" aria-label="Right eye cylinder" /></td>
+                <td><input type="number" step="1" min="0" max="180" data-rx="od.axis" aria-label="Right eye axis" /></td></tr>
+              <tr><th scope="row">Left <span>OS</span></th>
+                <td><input type="number" step="0.25" data-rx="os.sph" aria-label="Left eye sphere" /></td>
+                <td><input type="number" step="0.25" data-rx="os.cyl" aria-label="Left eye cylinder" /></td>
+                <td><input type="number" step="1" min="0" max="180" data-rx="os.axis" aria-label="Left eye axis" /></td></tr>
+            </tbody>
+          </table>
+          <p class="hint">Type the minus sign. Leave cylinder and axis blank if the slip has none.</p>
+          <label class="check"><input type="checkbox" id="rxDilated" /> Pupils were dilated with drops</label>
+          <ul class="note rx-err" id="rxErr" hidden></ul>
+          <div class="od-acts">
+            <button type="submit" class="btn" id="rxSave">Save exam</button>
+            <button type="button" class="btn ghost" id="rxCancel" hidden>Cancel edit</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Next dilated exam</h2>
+        <p class="count"><strong id="rxDue"></strong></p>
+        <p id="rxDueNote"></p>
+        <!-- Verified 2026-10-14 against the AOA and AAO pages linked here. The 2026 AAO update was read only through a trade report. -->
+        <p class="ex-src" id="rxDueSrc"><strong>Every 12 months is this app's choice. The guidelines disagree.</strong>
+          The American Optometric Association's 2023 guideline recommends a comprehensive eye exam every year from age 18 to 64
+          (<a href="https://www.aoa.org/about-the-aoa/press-room/press-releases/updated-clinical-guideline-reinforces-importance-of-annual-eye-exams-comprehensive-eye-care-with-doctors-of-optometry" rel="noopener">AOA, 8 Mar 2023</a>).
+          The American Academy of Ophthalmology advises an exam every 5 to 10 years under 40, for adults without risk factors
+          (<a href="https://aao.org/preferred-practice-pattern/comprehensive-adult-medical-eye-evaluation-ppp" rel="noopener">AAO Preferred Practice Pattern</a>).
+          A trade report says the AAO's 2026 update asks for a yearly dilated exam at −6.00 D or worse, or an eye longer than 26 mm
+          (<a href="https://www.reviewofoptometry.com/news/article/aao-releases-updated-ppp-guidelines-for-adult-eye-exams" rel="noopener">Review of Optometry, Feb 2026</a>).
+          The guideline itself wasn't read, so this app doesn't rely on it. Ask your eye doctor which interval applies to you.</p>
+      </div>
+      <div class="card rx-wide">
+        <h2>Trend</h2>
+        <p id="rxTrendEmpty">Log two exams to see a trend.</p>
+        <div id="rxChart"></div>
+        <ul class="rx-sum" id="rxSum"></ul>
+        <!-- Verified 2026-10-14 against the Otero 2019 abstract. The ±0.36 D is computed here, not printed in the paper. -->
+        <p class="ex-src" id="rxNoiseSrc"><strong>The ±0.50 D band is an assumption, rounded up from one study.</strong>
+          <a href="https://doi.org/10.1016/j.optom.2018.09.001" rel="noopener">Otero et al., J Optom 2019</a> refracted the same eyes in two sessions within a week.
+          For a standard clinical refraction, the SE of right eyes varied with a standard deviation of 0.13 D.
+          That puts 95% of repeat pairs within about ±0.36 D (2.77 × 0.13; this calculation is the app's, not the paper's).
+          Exams by different examiners or clinics probably vary more, but no figure for that was verified. Only the abstract was read.</p>
+      </div>
+      <div class="card">
+        <h2>Exams</h2>
+        <ul class="od-list" id="rxList"></ul>
+        <p id="rxListEmpty">No exams logged.</p>
+        <p class="ex-src">SE, the spherical equivalent, is sphere plus half the cylinder: one number per eye, so exams can be compared.</p>
+      </div>
+      <div class="card rx-alarm">
+        <h2>Get care right away</h2>
+        <!-- Wording follows the NEI page, checked 2026-10-14. -->
+        <div id="rxWarn">
+          <p><strong>Go to your eye doctor or an emergency room right away if you notice any of these:</strong></p>
+          <ul class="rx-sum">
+            <li>a lot of new floaters: small dark spots or squiggly lines that drift across your vision;</li>
+            <li>flashes of light in one eye or both;</li>
+            <li>a dark shadow or "curtain" at the side or in the middle of your vision.</li>
+          </ul>
+          <p>These can mean a retinal tear or detachment. The <a href="https://nei.nih.gov/learn-about-eye-health/eye-conditions-and-diseases/retinal-detachment" rel="noopener">National Eye Institute</a>
+          calls a detachment a medical emergency and says its symptoms often come on quickly. It also says a small detachment may cause no symptoms.
+          It lists extreme nearsightedness, especially degenerative myopia, as a risk factor, but gives no figure for how much the risk rises.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Verified 2026-10-14. Every quote below was matched word for word against the page or PDF linked beside it,
+       downloaded that day. Each card says whether that was an abstract or the full text. -->
+  <section data-view="facts" hidden>
+    <div class="head">
+      <h1>Facts</h1>
+      <p class="lede">What the evidence says, quoted from the source and linked. Each card says whether the full text or only the abstract was read.</p>
+    </div>
+    <div class="cards facts-cards facts">
+      <div class="card rx-wide">
+        <h2>What can and can't lower the number</h2>
+        <p><strong>No home method has been shown to lower a myopic prescription. Drops and special lenses slow its growth, in children, and do not reverse it. Surgery changes the number but not the eye's risks.</strong></p>
+        <div class="facts-split">
+          <div>
+            <h3>Tested, and didn't work</h3>
+            <ul class="rx-sum">
+              <li><strong>Eye exercises.</strong> The American Academy of Ophthalmology says nearsightedness "cannot be corrected with eye exercises"
+                (<a href="https://www.aao.org/eye-health/ask-ophthalmologist-q/exercise-refractive-errors" rel="noopener">Coats, AAO, 10 Mar 2014</a>).
+                A 2024 meta-analysis of 11 trials found "limited to no efficacy" (full text read; details on the <a href="#exercises">Exercises</a> page).</li>
+              <li><strong>The Bates method.</strong> 15 myopic adults, aged 18–53, were randomly given 3 weeks of Bates-style training or a control routine.
+                There were "no statistically significant changes in refractive error with either form of treatment"
+                (<a href="https://www.aojournal.com.au/archive/by-doing-eye-exercises-can-you-really-through-away-your-myopic-correction/" rel="noopener">Thompson et al., Aust Orthopt J 2004</a>; abstract read).
+                Small and short, and the only trial found.</li>
+              <li><strong>Pinhole glasses.</strong> 15 myopes wore them for near work for 3 weeks. Their refractive error did not change (right eye p = 0.08, left p = 0.09)
+                (<a href="https://journals.iium.edu.my/ijahs/index.php/IJAHS/article/view/105" rel="noopener">Che Azemin &amp; Che Arif, Int J Allied Health Sci 2018</a>; abstract read).
+                There was no control group, and no larger trial was found.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Slows it, in children</h3>
+            <ul class="rx-sum">
+              <li><strong>Atropine drops and myopia-control lenses</strong>: multifocal soft contacts, peripheral-plus and multifocal spectacles, orthokeratology.
+                A 2025 Cochrane review of 104 trials in 17,509 children aged 4 to 18: "These interventions may slow refractive change and reduce axial elongation, although results were often heterogeneous.
+                Less evidence is available for two years and beyond"
+                (<a href="https://doi.org/10.1002/14651858.CD014758.pub3" rel="noopener">Lawrenson et al.</a>; abstract read).
+                High-dose atropine rated best: 0.90 D less change than controls in a year (95% CI 0.62–1.18, moderate certainty). Most of the others were rated low or very low certainty.</li>
+              <li><strong>Slower, not lower.</strong> The AAO says these treatments "will not reverse the myopia you already have. They only keep your myopia from getting worse"
+                (<a href="https://www.aao.org/eye-health/ask-ophthalmologist-q/will-eye-exercises-cure-myopia" rel="noopener">Bensinger, AAO, 2 Sep 2020</a>).</li>
+              <li><strong>Adults are untested.</strong> The review took children only, and one search found no adult trial of atropine or these lenses.
+                Adult eyes can still change, though: of 691 people examined at 20 and again at 28, 37.8% had a myopic shift of 0.50 D or more in at least one eye
+                (<a href="https://doi.org/10.1001/jamaophthalmol.2021.5067" rel="noopener">Lee et al., JAMA Ophthalmol 2022</a>; abstract read).</li>
+            </ul>
+          </div>
+        </div>
+        <p><strong>LASIK changes the number, not the risk.</strong> It works "by reshaping the cornea"
+          (<a href="https://www.aao.org/eye-health/treatments/myopia-nearsightedness-treatment" rel="noopener">AAO</a>).
+          The International Myopia Institute says that after corneal surgery or lens procedures in a highly myopic eye, "the refraction of the eye may be normal, but the risk of pathologic myopia remains"
+          (<a href="https://myopiainstitute.org/imi-whitepaper/defining-and-classifying-myopia" rel="noopener">IMI, Flitcroft et al., 2019</a>; IMI's web copy read, not the journal article).
+          Whether LASIK leaves the eye's length exactly as it was is not settled here: one pilot of 10 eyes measured changes of 0.04 to 0.32 mm a month after surgery
+          (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC2993127/" rel="noopener">Chalkiadakis et al., Clin Ophthalmol 2010</a>; full text read), and no larger study was found.</p>
+      </div>
+
+      <div class="card">
+        <h2>When myopia counts as high</h2>
+        <p><strong>There is no single line. The WHO draws it at −5.00 D, the International Myopia Institute at −6.00 D.</strong></p>
+        <p><strong>WHO:</strong> "the spherical equivalent objective refractive error is <span class="nw">≤ –5.00 D</span> in either eye". It chose that line because uncorrected vision at −5.00 D is 6/172, "much worse than the threshold for blindness".
+          The same report says "there is currently no internationally agreed threshold"
+          (<a href="https://myopiainstitute.org/wp-content/uploads/2020/10/Myopia_report_020517.pdf" rel="noopener">WHO–Brien Holden Vision Institute, <em>The impact of myopia and high myopia</em>, 2016</a>; part read, from a mirror copy).</p>
+        <p><strong>IMI:</strong> "<span class="nw">≤ –6.00 D</span> when ocular accommodation is relaxed", for each eye on its own. It chose −6.00 D "for consistency with the lower threshold for myopia",
+          and says "there is no clear biological basis" for any cut-off
+          (<a href="https://myopiainstitute.org/imi-whitepaper/defining-and-classifying-myopia" rel="noopener">IMI, Flitcroft et al., 2019</a>; web copy read in full).</p>
+        <p>So between −5.00 D and −6.00 D an eye is high myopia by one definition and not by the other. Neither line marks a point where risk jumps.
+          Your spherical equivalent for each eye is on the <a href="#rx">Rx</a> page.</p>
+      </div>
+
+      <div class="card">
+        <h2>Screen setup</h2>
+        <p><strong>About 50–70 cm away. The top of the screen at or below eye level. Brightness matched to the room.</strong></p>
+        <ul class="rx-sum">
+          <li><strong>Distance.</strong> The American Optometric Association says "20 to 28 inches from the eyes", which is 51–71 cm
+            (<a href="https://www.aoa.org/healthy-eyes/eye-and-vision-conditions/computer-vision-syndrome" rel="noopener">AOA</a>).
+            The same page also gives 16 to 30 inches elsewhere. OSHA gives a wider range: "between 20 and 40 inches (50 and 100 cm)".</li>
+          <li><strong>Height.</strong> "Place monitor so top line of screen is at or below eye level"
+            (<a href="https://www.osha.gov/etools/computer-workstations/components/monitors" rel="noopener">OSHA</a>).
+            The AOA puts the centre of the screen 15 to 20 degrees below eye level.</li>
+          <li><strong>Brightness.</strong> "Adjust your screen brightness to match the level of light around you"
+            (<a href="https://www.aao.org/eye-health/tips-prevention/computer-usage" rel="noopener">AAO, 27 Jun 2024</a>).</li>
+        </ul>
+        <p>These are guidance pages, not trial results. They say what is comfortable, not what is proven to reduce strain, and nothing here touches myopia itself. All three pages were read in full.</p>
+      </div>
+
+      <div class="card">
+        <h2>Blue-light lenses</h2>
+        <p><strong>They may not reduce eye strain from screen work. The evidence is low-certainty and short.</strong></p>
+        <p>A 2023 Cochrane review of 17 trials: "There may be no difference in subjective visual fatigue scores with blue‐light filtering lenses compared to non‐blue‐light filtering lenses, at less than one week of follow‐up (low‐certainty evidence)"
+          (<a href="https://doi.org/10.1002/14651858.CD013244.pub2" rel="noopener">Singh et al.</a>).
+          The number behind that is one trial of 120 people: 9.76 units worse with the lenses, 95% CI −33.95 to 53.47, an interval wide enough to include no difference at all.
+          Its key message: blue-light lenses "may not reduce short‐term eyestrain associated with computer work".</p>
+        <p>"May", not "probably". The review says "probably" only for its moderate-certainty finding, on sharpness of vision. Eye strain was rated low.
+          The abstract and plain-language summary were read, from the full text on PubMed Central.</p>
+      </div>
+    </div>
+  </section>
+
+  <section data-view="settings" hidden>
+    <div class="head"><h1>Settings</h1></div>
+    <div class="cards settings-cards">
+      <div class="card">
+        <h2>Theme</h2>
+        <div class="seg" role="radiogroup" aria-label="Theme">
+          <label><input type="radio" name="theme" value="system" /> System</label>
+          <label><input type="radio" name="theme" value="dark" /> Dark</label>
+          <label><input type="radio" name="theme" value="light" /> Light</label>
+        </div>
+        <p>System follows your OS setting and switches when it does.</p>
+      </div>
+      <div class="card">
+        <h2><label for="dayStart">Day rolls over at</label></h2>
+        <select id="dayStart"></select>
+        <p>Anything logged before this hour counts toward the day before. Set it past the time you usually stop, so a late session lands on the day it began.</p>
+      </div>
+      <div class="card">
+        <h2>Break reminders</h2>
+        <label class="check"><input type="checkbox" id="brOn" /> Remind me every 20 minutes</label>
+        <p id="notifyNote"></p>
+        <button type="button" class="btn ghost" id="notifyAsk" hidden>Allow notifications</button>
+        <div class="seg" role="group" aria-label="Reminder days" id="brDays">
+          <label><input type="checkbox" value="1" /> Mon</label>
+          <label><input type="checkbox" value="2" /> Tue</label>
+          <label><input type="checkbox" value="3" /> Wed</label>
+          <label><input type="checkbox" value="4" /> Thu</label>
+          <label><input type="checkbox" value="5" /> Fri</label>
+          <label><input type="checkbox" value="6" /> Sat</label>
+          <label><input type="checkbox" value="0" /> Sun</label>
+        </div>
+        <p>These are also your desk days. The streak counts only them; other days are neither done nor missed.</p>
+        <p class="note">A change here re-scores past days too. Tick Saturday and every past Saturday becomes a miss; untick it and they are off again.</p>
+        <label class="check"><input type="checkbox" id="quietOn" /> Quiet hours</label>
+        <div class="row">
+          <input type="time" id="quietFrom" aria-label="Quiet hours start" /> to
+          <input type="time" id="quietTo" aria-label="Quiet hours end" />
+        </div>
+        <label class="check"><input type="checkbox" id="soundOn" /> Beep when a reminder fires and when the 20 s are up</label>
+      </div>
+      <div class="card">
+        <h2>Check-in nudge</h2>
+        <label class="check"><input type="checkbox" id="ciNudgeOn" /> Nudge me if the day's check-in is still blank</label>
+        <div class="row">at <input type="time" id="ciNudgeAt" aria-label="Nudge time" /></div>
+        <p>Once a day, only while the app is open, and not at all once the check-in is saved. A system notification when they're allowed, otherwise a note inside this window. Quiet hours don't apply: you chose the time.</p>
+      </div>
+      <div class="card storage-card">
+        <h2>Storage</h2>
+        <p>Saved in this browser under <code>vis.v1</code>, schema v<span id="schemaVersion"></span>. Sync, below, copies records out; a backup file is the copy that doesn't depend on Turso.</p>
+        <div class="row">
+          <button type="button" class="btn" id="backupBtn">Download backup</button>
+          <button type="button" class="btn ghost" id="restoreBtn">Restore from backup…</button>
+          <input type="file" id="restoreFile" accept=".json,application/json" hidden />
+        </div>
+        <label class="check"><input type="checkbox" id="restoreSettings" /> Also restore settings (theme, desk days, quiet hours, rollover)</label>
+        <p id="exportResult" class="sync-result" role="status"></p>
+        <p>The backup has every record and your settings. It leaves out the Turso token and a running outdoor timer. Restore only adds records or swaps in a newer copy of one you already have, so it can't delete anything; with the box ticked it overwrites settings, except the reminder and nudge switches, which stay as this device has them. Tick the box before you pick the file.</p>
+        <h3>CSV, for a spreadsheet</h3>
+        <div class="row">
+          <button type="button" class="btn ghost sm" data-csv="breaks">Breaks</button>
+          <button type="button" class="btn ghost sm" data-csv="outdoor">Outdoor time</button>
+          <button type="button" class="btn ghost sm" data-csv="symptoms">Symptoms</button>
+          <button type="button" class="btn ghost sm" data-csv="rx">Rx</button>
+        </div>
+        <p>Removed entries are left out. Outdoor entries added with +15 min are marked <code>estimate = yes</code>. Exercises are in the backup only.</p>
+      </div>
+      <div class="card sync-card">
+        <h2>Sync</h2>
+        <div class="sync-body">
+          <div class="sync-fields">
+            <label class="lbl" for="syncUrl">Database URL</label>
+            <input class="field" id="syncUrl" type="url" placeholder="libsql://your-db.turso.io" autocomplete="off" spellcheck="false" />
+            <label class="lbl" for="syncToken">Token</label>
+            <input class="field" id="syncToken" type="password" autocomplete="off" spellcheck="false" />
+            <div class="row">
+              <button type="button" class="btn ghost" id="syncTest">Test connection</button>
+              <span class="sync-result" id="syncResult" role="status"></span>
+            </div>
+            <label class="check"><input type="checkbox" id="syncOn" disabled /> Sync this device</label>
+            <p id="syncState"></p>
+            <button type="button" class="btn ghost" id="syncNow" disabled>Sync now</button>
+          </div>
+          <div class="sync-side">
+            <p>Copies your logged records (breaks, check-ins, exercises, outdoor time, Rx) to your own Turso database, so the laptop and the phone see one history. Settings, a running outdoor timer and this token never leave this device.</p>
+            <p>Both values come from Turso. The URL starts with <code>libsql://</code>; create a read-write token for this one database. The CLI gives them with <code>turso db show &lt;db&gt; --url</code> and <code>turso db tokens create &lt;db&gt;</code>. The dashboard should show both on the database's page; those steps were not checked against Turso's docs, the two commands were.</p>
+            <p>Sync stays off until Test connection passes. Editing the URL or token turns it off again.</p>
+            <p class="note">The token sits unencrypted in this browser: anyone with this browser profile can read it. To revoke it, run <code>turso db tokens invalidate &lt;db&gt;</code>, which revokes every token for that database's group.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<dialog class="look" id="look" aria-labelledby="lookTitle">
+  <h2 id="lookTitle">Look at something at least 6 m away</h2>
+  <p class="secs" id="lookSecs" aria-live="off">20</p>
+  <p class="sub">Keep looking until it reaches 0. The break logs itself, with a beep if sound is on.</p>
+  <button type="button" class="btn ghost" id="lookCancel">Cancel</button>
+</dialog>
+
+<dialog class="look" id="ex" aria-labelledby="exTitle">
+  <h2 id="exTitle"></h2>
+  <p class="secs sm" id="exClock" aria-live="off"></p>
+  <div class="ex-stage" id="exStage" aria-hidden="true"></div>
+  <p class="ex-cue" id="exCue" aria-live="polite"></p>
+  <div class="ex-acts">
+    <button type="button" class="btn" id="exAgain" hidden>Do it again</button>
+    <button type="button" class="btn ghost" id="exStop">Stop</button>
+  </div>
+</dialog>
+
+<script>
+/* ============================================================================
+   VIS · APP
+   ----------------------------------------------------------------------------
+     · STORAGE   load/save of the one key, `vis.v1`, through logic.migrate()
+     · THEME     system / dark / light, stamped on <html data-theme>
+     · ROUTER    the URL hash picks the view; unknown hashes land on Today
+     · TODAY     the current day key, with a note while the rollover is holding
+                 the previous day open
+     · BREAKS    the 20-20-20 scheduler, notification or in-window reminder,
+                 Done / Snooze, the 20 s look-far count, WebAudio beeps
+     · CHECK-IN  the day's three symptom scores, yesterday behind a banner,
+                 the evening nudge
+     · STREAK    done desk days in a row, today's raw count beside it, and a
+                 two-week calendar of what each day scored
+     · EXERCISES five guided exercises, each with its evidence tag and source;
+                 a finished run logs an "exercise" event, never a break
+     · OUTDOOR   start/stop timer kept as a start time in storage, +15 min
+                 estimates marked as such, a forgotten-stop guard, and a banner
+                 on every view while it runs
+     · RX        one exam per date from the slip, SE per eye, a trend chart
+                 with the noise band, the next dilated exam (a banner on Today
+                 once it is due) and the same-day warning signs
+     · SETTINGS  theme, day rollover, break reminders, check-in nudge
+     · SYNC      Turso over plain fetch (Hrana /v2/pipeline): test connection,
+                 create table, pull then push, status line and failure banners
+     · WINDOWS   a save from another window of this app is adopted here
+     · OFFLINE   service worker, registered only over http(s)
+
+   Public namespace: window.Vis (logic.js adds Vis.logic)
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  var L = Vis.logic;
+  var KEY = "vis.v1";
+  var VIEWS = ["today", "exercises", "outdoor", "rx", "facts", "settings"];
+  var darkQuery = matchMedia("(prefers-color-scheme: dark)");
+
+  function $(id) { return document.getElementById(id); }
+
+  /* Inline and persistent for the session. Never alert(): a modal for a
+     storage problem punishes the user for something they didn't do. */
+  function banner(msg) {
+    var p = document.createElement("p");
+    p.className = "banner";
+    p.textContent = msg;
+    $("banners").appendChild(p);
+  }
+
+  /* ---- STORAGE ------------------------------------------------------------ */
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(KEY); }
+    catch (e) {
+      banner("Browser storage is blocked, so nothing you change here will be saved.");
+      return L.defaultState();
+    }
+    if (!raw) return L.defaultState();
+    try { return L.migrate(JSON.parse(raw)); }
+    catch (e) {
+      /* Set the unreadable copy aside before anything can overwrite it. Starting
+         fresh over it would delete whatever history was in there. */
+      var aside = KEY + ".unreadable-" + Date.now();
+      try { localStorage.setItem(aside, raw); } catch (e2) {}
+      banner("Saved data couldn't be read. It was kept under " + aside + " and the app started empty.");
+      var s = L.defaultState();
+      save(s);
+      return s;
+    }
+  }
+
+  var saveWarned = false;
+  /* `fromSync` is the sync's own bookkeeping save. Every other save queues a
+     sync a few seconds out, so a walk logged on the phone goes up before the
+     app is closed. */
+  function save(s, fromSync) {
+    try { localStorage.setItem(KEY, JSON.stringify(s)); }
+    catch (e) {
+      if (!saveWarned) banner("Couldn't save — browser storage is full or blocked. Changes last only until this window closes.");
+      saveWarned = true;
+    }
+    if (!fromSync) syncSoon();
+  }
+
+  var state = load();
+
+  /* ---- THEME -------------------------------------------------------------- */
+  function applyTheme() {
+    document.documentElement.setAttribute("data-theme", L.themeId(state.settings.theme, darkQuery.matches));
+    /* The installed window paints its title bar from this, not from the CSS. */
+    document.querySelector('meta[name="theme-color"]').content =
+      getComputedStyle(document.documentElement).getPropertyValue("--page").trim();
+  }
+  darkQuery.addEventListener("change", function () {
+    if (state.settings.theme === "system") applyTheme();
+  });
+
+  /* ---- TODAY -------------------------------------------------------------- */
+  function fmtDay(key) {
+    return L.parseYmd(key).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  }
+  function hh(h) { return String(h).padStart(2, "0") + ":00"; }
+
+  function renderToday() {
+    var start = state.settings.dayStartHour;
+    var key = L.dayOf(Date.now(), start);
+    $("todayDate").textContent = fmtDay(key);
+    /* Past midnight but before the rollover, the calendar and the app disagree
+       about what day it is. Say so, or a log at 01:00 looks misfiled. */
+    var holding = key !== L.ymd(new Date());
+    $("rolloverNote").hidden = !holding;
+    if (holding) $("rolloverNote").textContent =
+      "Until " + hh(start) + ", anything you log counts toward " + fmtDay(key) + ".";
+    /* Stays on Today until a newer dilated exam is logged: easy to put off. */
+    var due = L.examDue(state.records);
+    $("examBanner").hidden = !(due && due <= key);
+    if (due && due <= key) $("examBanner").innerHTML = "Your dilated eye exam " +
+      (due === key ? "is due today" : "was due on " + fmtDate(due)) + '. <a href="#rx">Log it in Rx</a> once it is done.';
+    renderCheckin();
+  }
+
+  /* ---- BREAKS ------------------------------------------------------------- */
+  var INTERVAL_MS = L.BREAK_INTERVAL_MIN * 60000;
+  var TAG = "vis-break";
+  /* In memory only. A reload restarts the cycle, and "running since" shows
+     that it did (A4). */
+  var startedAt = 0, nextAt = 0, snoozeUntil = 0;
+  var reminderEl = null;
+
+  function br() { return state.settings.breaks; }
+  function hm(t) { return new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }); }
+  function since(t) {
+    var d = new Date(t);
+    return d.toDateString() === new Date().toDateString() ? hm(t)
+      : d.toLocaleDateString("en-GB", { weekday: "short" }) + " " + hm(t);
+  }
+
+  /* "file" | "unsupported" | "default" | "granted" | "denied". Chrome calls a
+     file:// page a secure context but never delivers its notifications, so
+     file: is ruled out by name rather than by isSecureContext. */
+  function notifyState() {
+    if (location.protocol === "file:") return "file";
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return "unsupported";
+    return Notification.permission;
+  }
+  /* Only a service-worker notification can carry Done and Snooze buttons. */
+  function osRegistration() {
+    if (notifyState() !== "granted") return Promise.resolve(null);
+    return navigator.serviceWorker.getRegistration().then(function (r) { return r && r.active ? r : null; });
+  }
+
+  function startReminders() { startedAt = Date.now(); nextAt = startedAt + INTERVAL_MS; snoozeUntil = 0; }
+  function stopReminders() { startedAt = nextAt = snoozeUntil = 0; dropReminder(); }
+
+  /* Once a second. Whatever happens when a reminder comes due, the next one is
+     20 minutes from now, so a quiet-hours skip or a sleep doesn't leave it
+     primed to fire the moment the pause ends. */
+  function tick() {
+    var now = Date.now();
+    if (startedAt) {
+      var due = L.breakDue(now, snoozeUntil || nextAt);
+      if (due !== "wait") {
+        var asked = !!snoozeUntil;
+        snoozeUntil = 0;
+        nextAt = now + INTERVAL_MS;
+        /* A snooze fires whatever the schedule says: you asked for it back. */
+        if (due === "fire" && (asked || !L.breakBlocked(br(), new Date(now)))) fire();
+      }
+    }
+    checkNudge(now);
+    renderBreaks();
+    paintRun();
+  }
+
+  function fire() {
+    cueReminder();
+    osRegistration().then(function (reg) {
+      if (!reg) return showReminder();
+      return reg.showNotification("Time for a 20-20-20 break", {
+        body: "Look at something at least 6 m away for 20 seconds.",
+        tag: TAG,
+        renotify: true,           // same tag again still alerts, instead of replacing silently
+        requireInteraction: true, // stays on screen until you act on it
+        icon: "icon-192.png",
+        actions: [{ action: "done", title: "Done" },
+                  { action: "snooze", title: "Snooze " + L.SNOOZE_MIN + " min" }]
+      });
+    }).catch(showReminder);
+  }
+
+  /* The fallback: file://, notifications blocked, or no service worker. It
+     stays until you act on it; a reminder that fades while you aren't looking
+     is a reminder you never got. */
+  function showReminder() {
+    if (reminderEl) reminderEl.remove();
+    reminderEl = document.createElement("div");
+    reminderEl.className = "toast rem";
+    reminderEl.setAttribute("role", "alert");
+    reminderEl.innerHTML =
+      "<strong>Time for a 20-20-20 break</strong>" +
+      "<span>Look at something at least 6 m away for 20 seconds.</span>" +
+      '<span class="acts">' +
+        '<button type="button" class="btn" data-act="look">Start 20 s</button>' +
+        '<button type="button" class="btn ghost" data-act="done">Done</button>' +
+        '<button type="button" class="btn ghost" data-act="snooze">Snooze ' + L.SNOOZE_MIN + " min</button>" +
+      "</span>";
+    reminderEl.addEventListener("click", function (e) {
+      var act = e.target.getAttribute("data-act");
+      if (act) handle(act);
+    });
+    $("toasts").appendChild(reminderEl);
+  }
+
+  /* Clears the reminder wherever it is showing, so a break taken another way
+     doesn't leave a stale notification on screen. */
+  function dropReminder() {
+    if (reminderEl) { reminderEl.remove(); reminderEl = null; }
+    closeOs(TAG);
+  }
+  function closeOs(tag) {
+    osRegistration().then(function (reg) {
+      if (reg) return reg.getNotifications({ tag: tag }).then(function (ns) {
+        ns.forEach(function (n) { n.close(); });
+      });
+    }).catch(function () {});
+  }
+
+  function toast(msg) {
+    var p = document.createElement("p");
+    p.className = "toast";
+    p.setAttribute("role", "status");
+    p.textContent = msg;
+    $("toasts").appendChild(p);
+    setTimeout(function () { p.remove(); }, 4000);
+  }
+
+  /* One entry point for every reminder action, from the in-window notes and
+     from system notifications (via the service worker). */
+  function handle(type) {
+    if (type === "done") logBreak();
+    else if (type === "snooze") snooze();
+    else if (type === "look") startLook();
+    else if (type === "checkin") goCheckin();
+    else if (type === "dismiss") dropNudge();
+  }
+
+  function rid(now) { return now.toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
+
+  function logBreak() {
+    var now = Date.now();
+    /* The day comes from the clock at the moment of the click, never from a
+       day the UI has selected: a break is something you just did. */
+    state.records.push({
+      id: rid(now),
+      kind: "break",
+      day: L.dayOf(now, state.settings.dayStartHour),
+      at: now,
+      updatedAt: now
+    });
+    save(state);
+    if (startedAt) { nextAt = now + INTERVAL_MS; snoozeUntil = 0; }
+    dropReminder();
+    renderBreaks();
+    toast("Break logged. " + $("breakCount").textContent + " today.");
+  }
+
+  function snooze() {
+    if (!startedAt) return;   // a notification left over from before reminders were turned off
+    snoozeUntil = Date.now() + L.SNOOZE_MIN * 60000;
+    dropReminder();
+    renderBreaks();
+    toast("Snoozed until " + hm(snoozeUntil) + ".");
+  }
+
+  /* The 20 s count runs off the wall clock, not a tick counter, so a
+     throttled window still ends on time. Closing the dialog any way other than
+     reaching 0 (Cancel, Esc) logs nothing. */
+  var look = $("look"), lookTimer = 0, lookEnd = 0, lookDone = false;
+  function startLook() {
+    if (look.open) return;
+    dropReminder();
+    lookDone = false;
+    lookEnd = Date.now() + L.LOOK_SECONDS * 1000;
+    paintLook();
+    clearInterval(lookTimer);
+    lookTimer = setInterval(paintLook, 200);
+    look.showModal();
+  }
+  function paintLook() {
+    var left = Math.max(0, Math.ceil((lookEnd - Date.now()) / 1000));
+    $("lookSecs").textContent = left;
+    if (left === 0 && !lookDone) {
+      lookDone = true;
+      look.close();
+      cueDone();
+      logBreak();
+    }
+  }
+  look.addEventListener("close", function () { clearInterval(lookTimer); });
+  $("lookCancel").addEventListener("click", function () { look.close(); });
+  $("lookNow").addEventListener("click", startLook);
+
+  /* Helth's beep: WebAudio, no audio files. The context is created on first
+     use. If Chrome's autoplay rule holds it suspended (a window opened at
+     login that nobody has clicked yet), the beep is silent until the first
+     click in the window. Unconfirmed whether an installed app is exempt. */
+  var audio = null;
+  function beep(freq, ms, vol) {
+    if (!br().sound) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+      var osc = audio.createOscillator(), gain = audio.createGain();
+      var t0 = audio.currentTime, dur = ms / 1000;
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      /* Short attack and release: a raw on/off gate clicks. */
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol || 0.14, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain); gain.connect(audio.destination);
+      osc.start(t0); osc.stop(t0 + dur + 0.02);
+    } catch (e) { /* sound is a nicety, never a failure */ }
+  }
+  /* The reminder is the loudest cue: it fires while you are looking at
+     something else. The end of the 20 s is a quieter rising triad. */
+  function cueReminder() {
+    [0, 260, 520].forEach(function (t) {
+      setTimeout(function () { beep(880, 120, 0.30); beep(1180, 90, 0.22); }, t);
+    });
+  }
+  function cueDone() {
+    beep(660, 150);
+    setTimeout(function () { beep(880, 150); }, 150);
+    setTimeout(function () { beep(1046, 280); }, 300);
+  }
+
+  function renderBreaks() {
+    var n = L.countBreaks(state.records, L.dayOf(Date.now(), state.settings.dayStartHour));
+    $("breakCount").textContent = n;
+    $("breakCountLabel").textContent = n === 1 ? "break today" : "breaks today";
+    $("breakOff").hidden = !!startedAt;
+    $("breakOn").hidden = !startedAt;
+    $("breakInWindow").hidden = !startedAt || notifyState() === "granted";
+    renderStreak();   // a sixth break can complete the day
+    if (!startedAt) return;
+    var b = br(), why = snoozeUntil ? null : L.breakBlocked(b, new Date());
+    $("breakOn").textContent = "Running since " + since(startedAt) + ". " + (
+      snoozeUntil ? "Snoozed until " + hm(snoozeUntil) + "." :
+      why === "quiet" ? "Paused for quiet hours, " + b.quiet.from + "–" + b.quiet.to + "." :
+      why === "day" ? (b.days.length
+        ? "Paused: " + new Date().toLocaleDateString("en-GB", { weekday: "long" }) + " isn't a reminder day."
+        : "Paused: no reminder days are ticked.") :
+      "Next at " + hm(nextAt) + ".");
+  }
+
+  var NOTIFY_NOTE = {
+    file: "Opened from a file, so Chrome won't show system notifications. Reminders appear inside this window instead.",
+    unsupported: "This browser can't show system notifications. Reminders appear inside this window instead.",
+    "default": "Allow notifications so a reminder reaches you while this window is behind others. Without them, reminders appear inside this window only.",
+    granted: "System notifications are allowed. Done and Snooze work straight from the notification.",
+    denied: "Notifications are blocked for this site, so reminders appear inside this window only. Unblock them in the browser's site settings."
+  };
+  function renderNotify() {
+    var s = notifyState();
+    $("notifyNote").textContent = NOTIFY_NOTE[s];
+    $("notifyAsk").hidden = s !== "default";
+    renderBreaks();
+  }
+  function askNotify() {
+    Notification.requestPermission().then(renderNotify, renderNotify);
+  }
+
+  /* ---- CHECK-IN ----------------------------------------------------------- */
+  var SCALE = ["none", "mild", "moderate", "severe"];
+  var NUDGE_TAG = "vis-checkin";
+  var ciForm = $("ci");
+  /* In memory only, like Helth's logging date: a reload always starts on
+     today, so the app never wakes up still filing into yesterday. */
+  var ciBack = false;
+  var nudgedDay = "", nudgeEl = null;
+
+  function todayKey() { return L.dayOf(Date.now(), state.settings.dayStartHour); }
+  function ciDay() { return ciBack ? L.addDays(todayKey(), -1) : todayKey(); }
+  function cap(w) { return w.charAt(0).toUpperCase() + w.slice(1); }
+
+  function initCheckin() {
+    L.SYMPTOMS.forEach(function (k) {
+      var row = document.createElement("div");
+      row.className = "sym";
+      row.setAttribute("role", "radiogroup");
+      row.setAttribute("aria-label", cap(k) + ", 0 none to 3 severe");
+      row.innerHTML = '<span class="sym-name">' + cap(k) + '</span><span class="seg num">' +
+        SCALE.map(function (word, v) {
+          return '<label title="' + v + " " + word + '"><input type="radio" name="ci-' + k + '" value="' + v + '" />' + v + "</label>";
+        }).join("") + "</span>";
+      ciForm.insertBefore(row, $("ciSave"));
+    });
+
+    ciForm.addEventListener("change", function () { $("ciMissing").hidden = true; });
+    ciForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      /* The day the form was painted for, not the clock's day now: a form
+         filled at 23:59 and saved at 00:01 belongs to the day it showed. */
+      var day = ciForm.dataset.day, scores = {};
+      L.SYMPTOMS.forEach(function (k) {
+        var r = ciForm.querySelector('input[name="ci-' + k + '"]:checked');
+        if (r) scores[k] = Number(r.value);
+      });
+      if (!L.setCheckin(state.records, day, scores, Date.now())) { $("ciMissing").hidden = false; return; }
+      save(state);
+      if (day === nudgedDay) dropNudge();
+      renderCheckin();
+      toast("Check-in saved for " + (day === todayKey() ? "today" : fmtDay(day)) + ".");
+    });
+
+    $("ciYestBtn").addEventListener("click", function () {
+      ciBack = true;
+      renderCheckin();
+      ciForm.querySelector("input").focus();
+    });
+    $("ciBack").addEventListener("click", function () { ciBack = false; renderCheckin(); });
+  }
+
+  /* The radios are repainted only when their day or its saved record changes.
+     The minute-by-minute refresh must never wipe a half-filled form, but a
+     save from another window must replace what this one shows. */
+  function renderCheckin() {
+    var t = todayKey(), day = ciDay(), rec = L.findCheckin(state.records, day);
+    var stamp = day + "@" + (rec ? rec.updatedAt : "");
+    if (ciForm.dataset.stamp !== stamp) {
+      ciForm.dataset.stamp = stamp;
+      ciForm.dataset.day = day;
+      L.SYMPTOMS.forEach(function (k) {
+        ciForm.querySelectorAll('input[name="ci-' + k + '"]').forEach(function (r) {
+          r.checked = !!rec && rec.scores[k] === Number(r.value);
+        });
+      });
+      $("ciMissing").hidden = true;
+    }
+
+    $("ciFor").textContent = (ciBack ? "Yesterday, " : "Today, ") + fmtDay(day);
+    $("ciSave").textContent = rec ? "Update check-in" : "Save check-in";
+    $("ciState").textContent = rec ? "Saved at " + since(rec.updatedAt) + "."
+      : "Blank so far. A skipped day stays blank — it is never guessed.";
+    $("ciBanner").hidden = !ciBack;
+    $("ciBannerDay").textContent = "yesterday, " + fmtDay(day);
+
+    var yk = L.addDays(t, -1), y = L.findCheckin(state.records, yk);
+    $("ciYest").hidden = ciBack;
+    $("ciYestText").textContent = "Yesterday, " + fmtDay(yk) + ": " + (y
+      ? L.SYMPTOMS.map(function (k) { return k + " " + y.scores[k]; }).join(", ") + "."
+      : "blank.");
+    $("ciYestBtn").textContent = y ? "Edit yesterday" : "Fill in yesterday";
+
+    var c = state.settings.checkin;
+    $("ciNudgeLine").innerHTML = c.nudge ? "Nudge at " + c.time + " if still blank."
+      : 'The nudge is off on this device. <a href="#settings">Turn it on in Settings</a>.';
+    renderStreak();   // a saved check-in can complete the day
+  }
+
+  /* Once per day, from the nudge time until the rollover. A window opened or
+     reloaded after the nudge time, with the day still blank, nudges at once:
+     the day is still blank, so the nudge is still true. */
+  function checkNudge(now) {
+    var c = state.settings.checkin, start = state.settings.dayStartHour, day = L.dayOf(now, start);
+    if (!c.nudge || nudgedDay === day || !L.pastNudge(new Date(now), c.time, start)) return;
+    if (L.findCheckin(state.records, day)) return;
+    nudgedDay = day;
+    var body = "Rate dryness, headache and blur for " + fmtDay(day) + ".";
+    osRegistration().then(function (reg) {
+      if (!reg) return showNudge(body);
+      /* data.click tells the service worker this click opens the check-in,
+         not the 20 s count a break reminder's click starts. */
+      return reg.showNotification("Check-in is still blank", {
+        body: body, tag: NUDGE_TAG, icon: "icon-192.png", data: { click: "checkin" }
+      });
+    }).catch(function () { showNudge(body); });
+  }
+
+  /* Stays until acted on, like the break reminder. */
+  function showNudge(body) {
+    if (nudgeEl) nudgeEl.remove();
+    nudgeEl = document.createElement("div");
+    nudgeEl.className = "toast rem";
+    nudgeEl.setAttribute("role", "alert");
+    nudgeEl.innerHTML = "<strong>Check-in is still blank</strong><span></span>" +
+      '<span class="acts"><button type="button" class="btn" data-act="checkin">Check in</button>' +
+      '<button type="button" class="btn ghost" data-act="dismiss">Dismiss</button></span>';
+    nudgeEl.children[1].textContent = body;
+    nudgeEl.addEventListener("click", function (e) {
+      var act = e.target.getAttribute("data-act");
+      if (act) handle(act);
+    });
+    $("toasts").appendChild(nudgeEl);
+  }
+  function dropNudge() {
+    if (nudgeEl) { nudgeEl.remove(); nudgeEl = null; }
+    closeOs(NUDGE_TAG);
+  }
+  function goCheckin() {
+    dropNudge();
+    ciBack = false;
+    if (location.hash !== "#today") location.hash = "today";
+    show();
+    var first = ciForm.querySelector("input");
+    first.focus();
+    first.scrollIntoView({ block: "center" });
+  }
+
+  /* ---- STREAK ------------------------------------------------------------- */
+  var VERDICT = { done: "done", grace: "missed, forgiven", miss: "missed", off: "not a desk day", open: "in progress" };
+  var streakStamp = "";
+
+  function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+
+  /* Runs every second from the break tick, so it paints only when something
+     changed: a repaint under the pointer would drop a calendar tooltip. */
+  function renderStreak() {
+    var t = todayKey(), desk = br().days, idx = L.dayIndex(state.records);
+    var s = L.streak(idx, t, desk), need = L.DONE_BREAKS;
+    var raw = function (d) { return idx[d] || { breaks: 0, checkin: false }; };
+    var r = raw(t), st = L.dayStatus(idx, t, desk);
+    var so = (r.breaks < need ? r.breaks + " of " + need + " breaks" : plural(r.breaks, "break")) +
+      ", check-in " + (r.checkin ? "saved" : "blank");
+
+    var today = !desk.length
+      ? 'No desk days are ticked, so nothing is counted. <a href="#settings">Tick them in Settings</a>.'
+      : st === "done" ? "Today is done: " + plural(r.breaks, "break") + " and a check-in."
+      : st === "off" ? "Today isn't a desk day, so it neither counts nor breaks the streak. So far: " + so + "."
+      : "Today so far: " + so + ".";
+    var g = s.graced.length;
+    var grace = g ? "Includes " + (g === 1 ? "1 forgiven miss" : g + " forgiven misses") + " (" +
+      s.graced.map(fmtDay).join(", ") + "). The run carries on, but forgiven days aren't counted." : "";
+
+    /* Days before the first log are blank, not missed: the app wasn't there. */
+    var first = Object.keys(idx).sort()[0] || t;
+    var mon = L.addDays(t, -((L.parseYmd(t).getDay() + 6) % 7));
+    var cells = "";
+    for (var i = -7; i < 7; i++) {
+      var d = L.addDays(mon, i), x = raw(d);
+      var v = d > t || d < first ? "blank" : s.graced.indexOf(d) >= 0 ? "grace" : L.dayStatus(idx, d, desk);
+      if (v === "miss" && d === t) v = "open";
+      var label = fmtDay(d) + ": " + (d > t ? "not yet." : d < first ? "before your first log."
+        : plural(x.breaks, "break") + ", check-in " + (x.checkin ? "saved" : "blank") + ". " + VERDICT[v] + ".");
+      cells += '<li class="' + v + (x.checkin ? " ci" : "") + (d === t ? " now" : "") +
+        '" title="' + label + '" aria-label="' + label + '">' + (v === "blank" ? "" : x.breaks) + "</li>";
+    }
+
+    renderCompare(idx);   // before the stamp check: a break or check-in can change it without changing the streak
+    var stamp = [s.current, today, grace, cells].join("|");
+    if (stamp === streakStamp) return;
+    streakStamp = stamp;
+    $("streakNum").textContent = s.current;
+    $("streakLabel").textContent = s.current === 1 ? "desk day in a row" : "desk days in a row";
+    $("streakToday").innerHTML = today;
+    $("streakGrace").hidden = !grace;
+    $("streakGrace").textContent = grace;
+    $("streakCal").innerHTML = cells;
+  }
+  $("streakRule").innerHTML = "A desk day is done with at least " + L.DONE_BREAKS + " breaks and a check-in. " +
+    (L.GRACE_PER_MONTH === 1 ? "One missed desk day" : L.GRACE_PER_MONTH + " missed desk days") +
+    " a month is forgiven if the desk day before it was done. Desk days are the reminder days in " +
+    '<a href="#settings">Settings</a>; other days neither count nor break the streak.';
+
+  /* ---- SYMPTOMS vs BREAKS ------------------------------------------------- */
+  /* Hidden until 14 check-ins (L.COMPARE_MIN_CHECKINS). The numbers and the
+     split come from logic.symptomCompare; this only prints them. Scores are
+     0 (none) to 3 (severe), so a lower mean is fewer symptoms. */
+  var cmpStamp = "";
+  function renderCompare(idx) {
+    var c = L.symptomCompare(state.records, idx, br().days);
+    $("cmpCard").hidden = !c.ready;
+    if (!c.ready) return;
+    var f2 = function (v) { return v == null || !c.ok ? "–" : v.toFixed(2); };
+    var med = String(c.median);
+    var rows = [["Days (n)", c.hi.n, c.lo.n], ["Mean breaks", f2(c.hi.breaks), f2(c.lo.breaks)]]
+      .concat(L.SYMPTOMS.map(function (k) { return [k[0].toUpperCase() + k.slice(1), f2(c.hi.by[k]), f2(c.lo.by[k])]; }))
+      .concat([["All three, mean", f2(c.hi.score), f2(c.lo.score)]]);
+    var tbl = "<thead><tr><th></th><th>" + med + " or more breaks</th><th>Under " + med + "</th></tr></thead><tbody>" +
+      rows.map(function (r) { return "<tr><th scope=\"row\">" + r[0] + "</th><td>" + r[1] + "</td><td>" + r[2] + "</td></tr>"; }).join("") + "</tbody>";
+
+    var lead = c.ok
+      ? "<p>On <strong>" + plural(c.hi.n, "desk day") + "</strong> with " + med + " or more breaks, the mean symptom score was <strong>" +
+        c.hi.score.toFixed(2) + "</strong>. On <strong>" + plural(c.lo.n, "desk day") + "</strong> with fewer, it was <strong>" +
+        c.lo.score.toFixed(2) + "</strong>. Scores run from 0 (none) to 3 (severe).</p>"
+      : "<p>Not enough days to compare: each side needs " + L.COMPARE_MIN_GROUP + " and this split has " + c.hi.n + " and " +
+        c.lo.n + ". Your median is " + med + " breaks a desk day, and a day exactly on it counts as &ldquo;or more&rdquo;.</p>";
+    var off = c.offDesk ? "<p>" + plural(c.offDesk, "check-in") + " on days that aren't desk days " +
+      (c.offDesk === 1 ? "is" : "are") + " counted toward the " + c.needed + " but left out of the comparison.</p>" : "";
+    var text = lead + "<p><strong>Correlation, not proof.</strong> Both groups are the same " + plural(c.used, "desk day") +
+      " split at your own median of " + med + ". A rough day may also change how many breaks you take, so the link can run either way. " +
+      "Each check-in is paired with the same day's breaks only.</p>" + off;
+
+    var stamp = tbl + text;
+    if (stamp === cmpStamp) return;
+    cmpStamp = stamp;
+    $("cmpTbl").innerHTML = tbl;
+    $("cmpText").innerHTML = text;
+  }
+
+  /* ---- EXERCISES ---------------------------------------------------------- */
+  /* Five guided exercises ported from Helth's eye care view. Helth's blurbs
+     claimed what each one does to the eye ("trains the focusing muscle",
+     "takes each of the six muscles through its full range"). None is
+     repeated here: a blurb says what you do, and the tag says what the
+     evidence is. Both come from A6 in PLAN-vis.md, with the source beside
+     the tag.
+
+     Each exercise supplies its stage markup, a frame(stage, elapsed, total)
+     that moves it, and a cue(elapsed, total) line. One driver (runEx) owns
+     the dialog, the wall-clock countdown and the logging. */
+  /* Verified 2026-10-12 against the abstracts, not from memory. "No trial
+     found" means a PubMed and Europe PMC search, one combined query for
+     eye rolls and figure-eight tracing, not a proof that none exists. */
+  var AAO = '<a href="https://www.aao.org/eye-health/ask-ophthalmologist-q/can-eye-exercises-improve-my-eyesight" rel="noopener">' +
+    'American Academy of Ophthalmology</a> (Repka, 2015): "There is no irrefutable (undeniable) evidence that eye exercises ' +
+    'can affect uncorrected visual acuity (sharpness of vision)."';
+  var doi = function (d, text) { return '<a href="https://doi.org/' + d + '" rel="noopener">' + text + "</a>"; };
+
+  var EX = [
+    { id: "palming", name: "Palming", secs: 60, on: false,
+      tag: "No evidence",
+      src: "No trial found. Whether it eases discomfort has not been tested; the only studies are non-randomised yoga programmes with palming as one of eight steps. " + AAO,
+      desc: "A minute of darkness: palms warm, laid over closed eyes.",
+      steps: [
+        "Rub your palms together for a few seconds until they feel warm.",
+        "Cup them gently over your closed eyes, with no pressure on the eyeballs.",
+        "Rest the edges of your hands on your cheekbones and brow so no light gets in.",
+        "Breathe slowly and let your eyes relax."
+      ],
+      stage: '<div class="ring">Eyes closed</div>',
+      frame: function (el, t) { el.firstChild.classList.toggle("on", Math.floor(t / 4) % 2 === 0); },
+      cue: function (t, total) {
+        return t < 8 ? "Rub your palms together until they feel warm."
+          : t < 16 ? "Cup them over your closed eyes. No pressure."
+          : t > total - 10 ? "Almost there. Keep breathing slowly."
+          : "Rest in the darkness. Let your jaw and forehead soften.";
+      } },
+
+    { id: "figure8", name: "Figure-eight tracing", secs: 60, on: false,
+      tag: "No evidence",
+      src: "No trial found. " + AAO,
+      desc: "Follow a dot around a figure of eight with your eyes. Head still.",
+      steps: [
+        "Keep your head still. Only your eyes move.",
+        "Follow the dot as it traces the figure of eight.",
+        "Track it smoothly rather than jumping ahead of it.",
+        "If your eyes tire, blink. Don't strain to keep up."
+      ],
+      /* A lemniscate as two mirrored cubic curves. The dot is placed with
+         getPointAtLength(), so it follows the drawn path exactly. */
+      stage: '<svg class="fig8" viewBox="0 0 400 200"><path d="M200 100 C 200 30, 340 30, 340 100 C 340 170, 200 170, 200 100 ' +
+        'C 200 30, 60 30, 60 100 C 60 170, 200 170, 200 100 Z"/><circle cx="200" cy="100" r="9"/></svg>',
+      frame: function (el, t) {
+        var path = el.querySelector("path"), dot = el.querySelector("circle");
+        var LOOP = 8;   // seconds per figure of eight
+        var p = path.getPointAtLength(((t % LOOP) / LOOP) * path.getTotalLength());
+        dot.setAttribute("cx", p.x);
+        dot.setAttribute("cy", p.y);
+      },
+      cue: function (t) { return t < 6 ? "Head still. Eyes only." : "Follow the dot around the loop."; } },
+
+    { id: "nearfar", name: "Near-far focus", secs: 60, on: false,
+      tag: "Weak evidence",
+      src: "No trial of this exercise for screen strain in adults was found. The nearest trials test office-based vergence and focus therapy for convergence insufficiency, a different condition: " +
+        doi("10.1001/archopht.126.10.1336", "CITT Study Group, Arch Ophthalmol 2008") + " (221 children aged 9–17, symptom score 15.1 with therapy vs 21.9 placebo; CISS, lower is better) and " +
+        doi("10.1097/01.opx.0000171331.36871.2f", "Scheiman et al., Optom Vis Sci 2005") + " (46 adults, symptom relief 42% with therapy vs 31% placebo — a small gap in a small trial).",
+      desc: "Switch focus every 5 seconds between your thumb and something across the room.",
+      steps: [
+        "Hold your thumb up about 25 cm (10 in) from your face.",
+        "When NEAR lights up, focus sharply on your thumb.",
+        "When FAR lights up, focus on something across the room, out of a window if you can.",
+        "Let each one come fully sharp before the switch."
+      ],
+      stage: '<div class="pair"><div class="ring">NEAR<br>about 25 cm</div><div class="ring">FAR</div></div>',
+      frame: function (el, t) {
+        var near = Math.floor(t / 5) % 2 === 0, r = el.querySelectorAll(".ring");
+        r[0].classList.toggle("on", near);
+        r[1].classList.toggle("on", !near);
+      },
+      cue: function (t) {
+        return Math.floor(t / 5) % 2 === 0 ? "Focus on your thumb, about 25 cm away." : "Now focus on something far across the room.";
+      } },
+
+    { id: "blink", name: "Deliberate blinking", secs: 45, on: false,
+      tag: "Weak evidence: dry eye",
+      src: "Small trials in adults with dry eye. " + doi("10.1016/j.clae.2025.102453", "Wolffsohn et al., Cont Lens Anterior Eye 2025") +
+        " compared two blink routines with each other, with no untreated group. Symptoms fell from before to after (p=0.001), so the routine is not shown to beat doing nothing. Most of the gain was gone 2 weeks after stopping, and blink rate and tear break-up did not change. " +
+        doi("10.1038/s41746-025-02053-8", "Xu et al., npj Digit Med 2025") + " (40 adults, 30 days, app vs nothing) found better blink behaviour and eye surface, but its abstract gives no symptom result. " +
+        "Both used a routine (best: 15 blinks, 3 times a day), not this single 45-second run.",
+      desc: "Close your eyes gently for 2 seconds, open for 3, for 45 seconds. With sound on, a soft beep marks each switch.",
+      steps: [
+        "When the circle lights, close your eyes gently and hold for two seconds.",
+        "Squeeze lightly at the end of the hold, then open.",
+        "Don't force it. A hard clench defeats the point.",
+        "Repeat through the set."
+      ],
+      stage: '<div class="ring">Open</div>',
+      frame: function (el, t) {
+        var shut = (t % 5) < 2, r = el.firstChild, want = shut ? "Close" : "Open";
+        r.classList.toggle("on", shut);
+        if (r.textContent !== want) { r.textContent = want; beep(shut ? 520 : 700, 70, 0.08); }
+      },
+      cue: function () { return "Close gently for two, then open."; } },
+
+    { id: "rolls", name: "Eye rolls", secs: 60, on: false,
+      tag: "No evidence",
+      src: "No trial found. " + AAO,
+      desc: "Follow a dot around a circle: clockwise for 30 seconds, then counter-clockwise.",
+      steps: [
+        "Keep your head completely still.",
+        "Follow the dot all the way around the circle with your eyes.",
+        "Go to the edge of a comfortable range, never past it.",
+        "The direction reverses halfway through."
+      ],
+      stage: '<div class="orbit"><i></i></div>',
+      frame: function (el, t, total) {
+        var PERIOD = 6, R = 89;   // seconds per turn; ring radius inside its 2 px border
+        var a = (t / PERIOD) * Math.PI * 2 * (t < total / 2 ? 1 : -1) - Math.PI / 2;
+        el.querySelector("i").style.transform = "translate(" + Math.cos(a) * R + "px," + Math.sin(a) * R + "px)";
+      },
+      cue: function (t, total) { return t < total / 2 ? "Clockwise. Head still, eyes wide." : "Now counter-clockwise."; } }
+  ];
+
+  function mmss(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+
+  function renderExercises() {
+    var n = L.countExercises(state.records, todayKey());
+    $("exCards").innerHTML = EX.map(function (x) {
+      return '<div class="card ex-card"><div class="ex-meta"><h2>' + x.name + '</h2><span class="tag' + (x.on ? " on" : "") +
+        '">' + x.tag + "</span></div>" +
+        "<p>" + x.desc + " " + mmss(x.secs) + ".</p>" +
+        '<ol class="ex-steps">' + x.steps.map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</ol>" +
+        '<p class="ex-src">' + x.src + "</p>" +
+        '<div class="ex-foot"><button type="button" class="btn" data-ex="' + x.id + '">Start</button>' +
+        (n[x.id] ? "<span>" + n[x.id] + " today</span>" : "") + "</div></div>";
+    }).join("");
+  }
+
+  /* Wall-clock countdown like the 20 s look-away, so a throttled window still
+     ends on time. Closing the dialog any way but reaching 0 logs nothing: an
+     abandoned run isn't a finished one. */
+  var exDlg = $("ex"), exTimer = 0, exEnd = 0, exCur = null, exDone = false, exCueText = "";
+  function runEx(x) {
+    exCur = x; exDone = false; exCueText = "";
+    $("exTitle").textContent = x.name;
+    $("exStage").innerHTML = x.stage;
+    $("exStage").hidden = $("exClock").hidden = false;
+    $("exAgain").hidden = true;
+    $("exStop").textContent = "Stop";
+    exEnd = Date.now() + x.secs * 1000;
+    paintEx();
+    clearInterval(exTimer);
+    exTimer = setInterval(paintEx, 50);
+    if (!exDlg.open) exDlg.showModal();
+  }
+  function paintEx() {
+    var left = Math.max(0, (exEnd - Date.now()) / 1000), t = exCur.secs - left;
+    $("exClock").textContent = mmss(Math.ceil(left));
+    /* Written only when it changes: the cue is a live region, and rewriting
+       the same text would be read out again every 50 ms. */
+    var cue = exCur.cue(t, exCur.secs);
+    if (cue !== exCueText) $("exCue").textContent = exCueText = cue;
+    exCur.frame($("exStage"), t, exCur.secs);
+    if (left === 0 && !exDone) finishEx();
+  }
+  function finishEx() {
+    exDone = true;
+    clearInterval(exTimer);
+    var now = Date.now();
+    state.records.push({ id: rid(now), kind: "exercise", exercise: exCur.id,
+      day: L.dayOf(now, state.settings.dayStartHour), at: now, updatedAt: now });
+    save(state);
+    cueDone();
+    renderExercises();
+    var n = L.countExercises(state.records, todayKey())[exCur.id];
+    $("exStage").hidden = $("exClock").hidden = true;
+    $("exCue").textContent = exCueText = exCur.name + " logged. " + n + " today.";
+    $("exAgain").hidden = false;
+    $("exStop").textContent = "Close";
+    $("exAgain").focus();
+  }
+  exDlg.addEventListener("close", function () { clearInterval(exTimer); });
+  $("exStop").addEventListener("click", function () { exDlg.close(); });
+  $("exAgain").addEventListener("click", function () { runEx(exCur); });
+  $("exCards").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ex]");
+    if (!b) return;
+    runEx(EX.filter(function (x) { return x.id === b.getAttribute("data-ex"); })[0]);
+  });
+
+  /* ---- OUTDOOR ------------------------------------------------------------ */
+  /* The timer is a start time in storage (state.outdoorRun), never a counter in
+     memory: a reload mid-walk must not lose the walk. It is local-only until
+     stopped, so it lives outside `records`. A timer still running after
+     MAX_RUN_MS is a forgotten stop and asks for minutes instead of logging. */
+  function fmtMin(sec) {
+    var m = Math.floor(sec / 60);
+    return m < 60 ? m + " min" : Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") + " min";
+  }
+  function fmtClock(ms) {
+    var s = Math.floor(ms / 1000);
+    return Math.floor(s / 3600) + ":" + String(Math.floor(s / 60) % 60).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+  }
+  var odReviewing = false;   // the minutes form is open; in memory, so a reload re-asks
+
+  function renderOutdoor() {
+    var day = todayKey(), d = L.outdoorDay(state.records, day), total = d.timed + d.quick;
+    var running = !!state.outdoorRun, target = L.OUTDOOR_TARGET_MIN;
+    if (!running) odReviewing = false;   // another window stopped it; a fresh Start must not reopen the form
+    $("odDate").textContent = fmtDay(day);
+    $("odTotal").textContent = Math.floor(total / 60);
+    $("odOf").textContent = "of " + target + " min";
+    $("odBar").max = target; $("odBar").value = Math.min(total / 60, target);
+    $("odSplit").textContent = !d.entries.length ? "Nothing logged yet." :
+      fmtMin(d.timed) + " timed by you" + (d.quick ? ", " + fmtMin(d.quick) + " estimated" : "") +
+      (total >= target * 60 ? ". Target reached." : ".");
+    $("odToggle").textContent = running ? "Stop timer" : "Start timer";
+    $("odQuick").textContent = "+" + L.QUICK_ADD_MIN + " min";
+    $("odQuickNote").textContent = "+" + L.QUICK_ADD_MIN + " min is your estimate, not a measurement, and is marked as one.";
+    $("odQuick").disabled = running;   // adding time while one is timing would count it twice
+    $("odRunNote").hidden = !running;
+    $("odClock").hidden = !running;
+    $("odReview").hidden = !(running && odReviewing);
+    $("odList").innerHTML = d.entries.map(function (r) {
+      var when = r.source === "quick" ? "added " + hm(r.at) : hm(r.startedAt) + "–" + hm(r.at);
+      return '<li><span class="when">' + when + "</span><span>" + fmtMin(Number(r.seconds)) + '</span><span class="tag">' +
+        (r.source === "quick" ? "estimate" : "timed by you") + '</span><button type="button" class="btn ghost sm" data-od-rm="' +
+        r.id.replace(/[^\w-]/g, "") + '" aria-label="Remove ' + fmtMin(Number(r.seconds)) + ' entry">Remove</button></li>';
+    }).join("");
+    $("odListEmpty").hidden = d.entries.length > 0;
+    paintRun();
+  }
+
+  /* Every second, and cheap: two text nodes. */
+  function paintRun() {
+    var run = state.outdoorRun, now = Date.now();
+    $("runBanner").hidden = !run;
+    if (!run) return;
+    $("runSince").textContent = since(run);
+    $("runFor").textContent = fmtClock(L.runMs(state, now));
+    $("odClock").textContent = fmtClock(L.runMs(state, now));
+    $("odRunNote").textContent = L.runNeedsReview(state, now)
+      ? "This has run over " + (L.MAX_RUN_MS / 3600000) + " hours, so it is probably a forgotten stop. Stopping will ask how long you were out."
+      : "Running since " + since(run) + ". Time runs from the clock, so it keeps counting if you close this window.";
+  }
+
+  function toggleRun() {
+    var now = Date.now();
+    if (!state.outdoorRun) {
+      L.startRun(state, now);
+      save(state);
+    } else if (L.runNeedsReview(state, now)) {
+      var mins = Math.floor(L.runMs(state, now) / 60000);
+      odReviewing = true;
+      $("odReviewText").textContent = "The timer ran " + fmtMin(Math.floor(L.runMs(state, now) / 1000)) +
+        ". Nothing is logged until you say how long you were really outside.";
+      $("odMins").max = mins; $("odMins").value = "";
+      $("odReviewErr").hidden = true;
+    } else {
+      var rec = L.stopRun(state, now, rid(now), state.settings.dayStartHour);
+      save(state);
+      toast(rec ? "Logged " + fmtMin(rec.seconds) + " outside." : "Under a minute, so nothing was logged.");
+    }
+    renderOutdoor();
+    if (odReviewing) $("odMins").focus();
+  }
+
+  $("odToggle").addEventListener("click", toggleRun);
+  $("odQuick").addEventListener("click", function () {
+    var now = Date.now();
+    L.quickAdd(state.records, now, rid(now), state.settings.dayStartHour);
+    save(state);
+    renderOutdoor();
+    toast("Added " + L.QUICK_ADD_MIN + " min, marked as an estimate.");
+  });
+  $("odReview").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var now = Date.now(), mins = Number($("odMins").value), max = Math.floor(L.runMs(state, now) / 60000);
+    if (!Number.isInteger(mins) || mins < 1 || mins > max) {
+      $("odReviewErr").textContent = "Enter a whole number of minutes from 1 to " + max + ".";
+      $("odReviewErr").hidden = false;
+      return;
+    }
+    var rec = L.stopRun(state, now, rid(now), state.settings.dayStartHour, mins * 60);
+    odReviewing = false;
+    save(state);
+    renderOutdoor();
+    toast(rec ? "Logged " + fmtMin(rec.seconds) + " outside." : "Nothing logged.");
+  });
+  $("odDiscard").addEventListener("click", function () {
+    L.discardRun(state);
+    odReviewing = false;
+    save(state);
+    renderOutdoor();
+    toast("Timer discarded. Nothing was logged.");
+  });
+  /* A removed entry is a tombstone (A5), so it can't return when sync arrives. */
+  $("odList").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-od-rm]");
+    if (!b || !L.removeRecord(state.records, b.getAttribute("data-od-rm"), Date.now())) return;
+    save(state);
+    renderOutdoor();
+    toast("Entry removed.");
+  });
+
+  /* ---- RX ----------------------------------------------------------------- */
+  var rxEditing = null;   // date of the exam open in the form, or null for a new one
+
+  function fmtDate(key) { return L.parseYmd(key).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); }
+  /* Signed, two decimals, a real minus sign: −3.25, +0.50, 0.00. */
+  function fmtD(v) { return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2); }
+  function fmtEye(e) { return fmtD(e.sph) + (e.cyl ? " " + fmtD(e.cyl) + " × " + Number(e.axis) : " DS"); }
+  function safeDay(d) { return String(d).replace(/[^\d-]/g, ""); }
+  var EYE_NAME = { od: "Right eye", os: "Left eye" };
+
+  /* Repaints everything but the form, so a save from another window can't
+     wipe what you are typing. */
+  function renderRx() {
+    var exams = L.rxExams(state.records), t = todayKey(), due = L.examDue(state.records);
+    $("rxDay").max = t;
+    var lastDil = exams.filter(function (r) { return r.dilated === true; }).pop();
+    $("rxDue").textContent = due ? fmtDate(due) : "Not known";
+    $("rxDueNote").textContent = !due
+      ? "No dilated exam is logged. Tick \"Pupils were dilated\" when you log one, and the date appears here."
+      : (due <= t ? "Due now. " : "") + L.EXAM_INTERVAL_MONTHS + " months after the dilated exam of " + fmtDate(lastDil.day) +
+        ". Only exams marked dilated count toward this date.";
+    $("rxDueNote").classList.toggle("note", !!due && due <= t);
+
+    $("rxListEmpty").hidden = exams.length > 0;
+    $("rxList").innerHTML = exams.slice().reverse().map(function (r) {
+      var d = safeDay(r.day);
+      return '<li><span class="when">' + fmtDate(d) + "</span>" +
+        (r.dilated === true ? '<span class="tag">dilated</span>' : "") +
+        '<button type="button" class="btn ghost sm" data-rx-edit="' + d + '" aria-label="Edit the exam of ' + fmtDate(d) + '">Edit</button>' +
+        '<button type="button" class="btn ghost sm" data-rx-rm="' + d + '" aria-label="Remove the exam of ' + fmtDate(d) + '">Remove</button>' +
+        '<span class="rx-eyes">R ' + fmtEye(r.od) + " (SE " + fmtD(L.rxSE(r.od)) + ")<br>L " + fmtEye(r.os) + " (SE " + fmtD(L.rxSE(r.os)) + ")</span></li>";
+    }).join("");
+
+    var two = exams.length >= 2;
+    $("rxTrendEmpty").hidden = two;
+    $("rxChart").innerHTML = two ? rxChart(exams) : "";
+    $("rxSum").innerHTML = "";
+    if (!two) return;
+    var first = exams[0], prev = exams[exams.length - 2], last = exams[exams.length - 1];
+    var band = "±" + L.RX_NOISE_D.toFixed(2) + " D";
+    L.EYES.forEach(function (k) {
+      var c = L.rxChange(prev, last)[k];
+      var s = EYE_NAME[k] + ": SE " + fmtD(L.rxSE(prev[k])) + " on " + fmtDate(prev.day) + ", " + fmtD(L.rxSE(last[k])) + " on " + fmtDate(last.day) +
+        ", a change of " + fmtD(c.delta) + " D. " +
+        (c.noise ? "That is inside the " + band + " band, so it may be measurement noise, not a real change."
+                 : "That is outside the " + band + " band, so noise alone is a less likely explanation.");
+      if (exams.length > 2) {
+        var f = L.rxChange(first, last)[k];
+        s += " Since your first exam (" + fmtDate(first.day) + "): " + fmtD(f.delta) + " D, " + (f.noise ? "inside" : "outside") + " the band.";
+      }
+      var li = document.createElement("li");
+      li.textContent = s;
+      $("rxSum").appendChild(li);
+    });
+  }
+
+  /* SE over time, one line per eye, more myopic lower down. Each exam has a
+     shaded bar of ±RX_NOISE_D: where two bars overlap, the exams may not
+     differ at all. */
+  function rxChart(exams) {
+    /* One viewBox unit per CSS pixel, so the 11 px labels stay 11 px on a
+       phone instead of scaling down to 6.
+       ponytail: sized when drawn; a rotated phone redraws on the next visit. */
+    var W = Math.max(300, $("rxChart").clientWidth || 640), H = 220, l = 52, r = 16, top = 12, bot = 26, band = L.RX_NOISE_D;
+    var ses = [];
+    exams.forEach(function (e) { L.EYES.forEach(function (k) { ses.push(L.rxSE(e[k])); }); });
+    var lo = Math.floor((Math.min.apply(null, ses) - band) * 2) / 2;
+    var hi = Math.ceil((Math.max.apply(null, ses) + band) * 2) / 2;
+    var t0 = L.parseYmd(exams[0].day).getTime(), t1 = L.parseYmd(exams[exams.length - 1].day).getTime();
+    function x(day) { return l + (L.parseYmd(day).getTime() - t0) / (t1 - t0) * (W - l - r); }
+    function y(v) { return top + (hi - v) / (hi - lo) * (H - top - bot); }
+    var out = "", step = hi - lo > 6 ? 1 : 0.5;
+    for (var v = hi; v >= lo - 1e-9; v -= step) {
+      out += '<line class="rx-grid" x1="' + l + '" x2="' + (W - r) + '" y1="' + y(v) + '" y2="' + y(v) + '"/>' +
+        '<text class="rx-axis" x="' + (l - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + fmtD(v) + "</text>";
+    }
+    var my = function (day) { return L.parseYmd(day).toLocaleDateString("en-GB", { month: "short", year: "numeric" }); };
+    out += '<text class="rx-axis" x="' + l + '" y="' + (H - 6) + '">' + my(exams[0].day) + "</text>" +
+      '<text class="rx-axis" x="' + (W - r) + '" y="' + (H - 6) + '" text-anchor="end">' + my(exams[exams.length - 1].day) + "</text>";
+    L.EYES.forEach(function (k, i) {
+      var dx = i ? 4 : -4;   // side by side, so equal values don't hide each other
+      var pts = exams.map(function (e) { return (x(e.day) + dx) + "," + y(L.rxSE(e[k])); }).join(" ");
+      exams.forEach(function (e) {
+        var se = L.rxSE(e[k]);
+        out += '<rect class="rx-band rx-' + k + '" x="' + (x(e.day) + dx - 5) + '" y="' + y(se + band) + '" width="10" height="' + (y(se - band) - y(se + band)) + '"/>';
+      });
+      out += '<polyline class="rx-line rx-' + k + '" points="' + pts + '"/>';
+      exams.forEach(function (e) { out += '<circle class="rx-' + k + '" cx="' + (x(e.day) + dx) + '" cy="' + y(L.rxSE(e[k])) + '" r="3.5"/>'; });
+    });
+    return '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Spherical equivalent by exam date. The sentences below the chart give the same numbers.">' + out + "</svg>" +
+      '<p class="rx-key"><span><i></i>Right eye</span><span><i class="os"></i>Left eye</span><span>Shaded: ±' + band.toFixed(2) + " D around each exam</span></p>";
+  }
+
+  function rxInputs() { return document.querySelectorAll("#rxForm [data-rx]"); }
+
+  /* Fill the form from an exam, or clear it for a new one. */
+  function rxFill(rec) {
+    rxEditing = rec ? rec.day : null;
+    $("rxDay").value = rec ? rec.day : "";
+    $("rxDilated").checked = !!rec && rec.dilated === true;
+    rxInputs().forEach(function (el) {
+      var p = el.getAttribute("data-rx").split("."), v = rec ? rec[p[0]][p[1]] : null;
+      el.value = v == null || (p[1] === "cyl" && v === 0) ? "" : p[1] === "axis" ? String(v) : v.toFixed(2);
+    });
+    $("rxErr").hidden = true;
+    $("rxFormTitle").textContent = rec ? "Edit the exam of " + fmtDate(rec.day) : "Log an exam";
+    $("rxSave").textContent = rec ? "Save changes" : "Save exam";
+    $("rxCancel").hidden = !rec;
+  }
+
+  $("rxForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var input = { day: $("rxDay").value, dilated: $("rxDilated").checked, od: {}, os: {} };
+    /* A number field holding text reads as "", which for a cylinder would
+       mean 0. Pass it on as junk instead, so it is an error, not a guess. */
+    rxInputs().forEach(function (el) {
+      var p = el.getAttribute("data-rx").split(".");
+      input[p[0]][p[1]] = el.validity.badInput ? "x" : el.value;
+    });
+    var c = L.checkRx(input, todayKey());
+    if (!c.errors.length && c.exam.day !== rxEditing && L.rxExams(state.records).some(function (r) { return r.day === c.exam.day; }))
+      c.errors.push("An exam on " + fmtDate(c.exam.day) + " is already logged. Edit that one instead.");
+    if (c.errors.length) {
+      $("rxErr").innerHTML = "";
+      c.errors.forEach(function (m) { var li = document.createElement("li"); li.textContent = m; $("rxErr").appendChild(li); });
+      $("rxErr").hidden = false;
+      return;
+    }
+    var editing = rxEditing;
+    L.setRx(state.records, c.exam, Date.now(), editing);
+    save(state);
+    rxFill(null);
+    renderRx();
+    renderToday();
+    toast(editing ? "Exam updated." : "Exam of " + fmtDate(c.exam.day) + " saved.");
+  });
+  $("rxCancel").addEventListener("click", function () { rxFill(null); });
+  $("rxList").addEventListener("click", function (e) {
+    var ed = e.target.closest("[data-rx-edit]"), rm = e.target.closest("[data-rx-rm]");
+    if (ed) {
+      var day = ed.getAttribute("data-rx-edit");
+      rxFill(L.rxExams(state.records).filter(function (r) { return r.day === day; })[0] || null);
+      $("rxDay").focus();
+    } else if (rm) {
+      var d = rm.getAttribute("data-rx-rm");
+      if (!L.removeRecord(state.records, L.rxId(d), Date.now())) return;
+      if (rxEditing === d) rxFill(null);
+      save(state);
+      renderRx();
+      renderToday();
+      toast("Exam of " + fmtDate(d) + " removed.");
+    }
+  });
+
+  /* ---- ROUTER ------------------------------------------------------------- */
+  function show() {
+    var view = location.hash.slice(1);
+    if (VIEWS.indexOf(view) < 0) view = "today";
+    document.querySelectorAll("[data-view]").forEach(function (s) {
+      s.hidden = s.getAttribute("data-view") !== view;
+    });
+    document.querySelectorAll(".nav a").forEach(function (a) {
+      if (a.getAttribute("href") === "#" + view) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+    if (view === "today") renderToday();
+    else if (view === "exercises") renderExercises();
+    else if (view === "outdoor") renderOutdoor();
+    else if (view === "rx") renderRx();
+    paintRun();
+  }
+
+  /* ---- SETTINGS ----------------------------------------------------------- */
+  var dayBoxes = document.querySelectorAll("#brDays input");
+
+  /* Controls from state. Separate from initSettings so a save adopted from
+     another window can repaint them. */
+  function paintSettings() {
+    var b = br();
+    document.querySelectorAll('input[name="theme"]').forEach(function (r) {
+      r.checked = r.value === state.settings.theme;
+    });
+    $("dayStart").value = state.settings.dayStartHour;
+    $("brOn").checked = b.enabled;
+    dayBoxes.forEach(function (c) { c.checked = b.days.indexOf(Number(c.value)) >= 0; });
+    $("quietOn").checked = b.quiet.enabled;
+    $("quietFrom").value = b.quiet.from;
+    $("quietTo").value = b.quiet.to;
+    $("soundOn").checked = b.sound;
+    $("ciNudgeOn").checked = state.settings.checkin.nudge;
+    $("ciNudgeAt").value = state.settings.checkin.time;
+  }
+
+  function initSettings() {
+    document.querySelectorAll('input[name="theme"]').forEach(function (r) {
+      r.addEventListener("change", function () {
+        state.settings.theme = r.value;
+        save(state);
+        applyTheme();
+      });
+    });
+
+    var sel = $("dayStart");
+    for (var h = 0; h <= L.MAX_DAY_START_HOUR; h++) sel.add(new Option(hh(h), h));
+    sel.addEventListener("change", function () {
+      state.settings.dayStartHour = Number(sel.value);
+      save(state);
+      renderToday();
+      renderBreaks();
+    });
+
+    $("brOn").addEventListener("change", function () {
+      br().enabled = $("brOn").checked;
+      save(state);
+      if (br().enabled) {
+        startReminders();
+        /* Asked here, on the click that turned reminders on, never cold at load. */
+        if (notifyState() === "default") askNotify();
+      } else stopReminders();
+      renderBreaks();
+    });
+    dayBoxes.forEach(function (c) {
+      c.addEventListener("change", function () {
+        br().days = [].filter.call(dayBoxes, function (x) { return x.checked; })
+          .map(function (x) { return Number(x.value); }).sort(function (x, y) { return x - y; });
+        save(state);
+        renderBreaks();
+      });
+    });
+    $("quietOn").addEventListener("change", function () {
+      br().quiet.enabled = $("quietOn").checked;
+      save(state);
+      renderBreaks();
+    });
+    ["quietFrom", "quietTo"].forEach(function (id) {
+      $(id).addEventListener("change", function () {
+        /* A half-typed or cleared time keeps the last good one. */
+        if (!/^\d\d:\d\d$/.test($(id).value)) return;
+        br().quiet[id === "quietFrom" ? "from" : "to"] = $(id).value;
+        save(state);
+        renderBreaks();
+      });
+    });
+    $("soundOn").addEventListener("change", function () {
+      br().sound = $("soundOn").checked;
+      save(state);
+    });
+    $("notifyAsk").addEventListener("click", askNotify);
+
+    $("ciNudgeOn").addEventListener("change", function () {
+      state.settings.checkin.nudge = $("ciNudgeOn").checked;
+      save(state);
+      if (state.settings.checkin.nudge && notifyState() === "default") askNotify();
+      renderCheckin();
+    });
+    $("ciNudgeAt").addEventListener("change", function () {
+      if (!/^\d\d:\d\d$/.test($("ciNudgeAt").value)) return;   // half-typed: keep the last good time
+      state.settings.checkin.time = $("ciNudgeAt").value;
+      save(state);
+      renderCheckin();
+    });
+
+    $("schemaVersion").textContent = L.SCHEMA_VERSION;
+    paintSettings();
+    renderNotify();
+  }
+
+  /* ---- EXPORT ------------------------------------------------------------- */
+  /* Backup is JSON (round-trips, keeps tombstones); CSV is one file per kind,
+     for reading. Restore goes through the same merge as sync, so it can add
+     or replace with a newer copy but never remove: a wrong file costs a few
+     stray records, not history. */
+  var MAX_BACKUP_BYTES = 50 * 1024 * 1024;
+
+  function stamp() {
+    var d = new Date(), p = function (n) { return String(n).padStart(2, "0"); };
+    return L.ymd(d).replace(/-/g, "") + "-" + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+  function download(name, mime, text) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+  }
+
+  function initExport() {
+    function say(msg, bad) {
+      var o = $("exportResult");
+      o.textContent = msg;
+      o.className = "sync-result" + (bad ? " bad" : "");
+    }
+
+    $("backupBtn").addEventListener("click", function () {
+      var name = "vis-backup-" + stamp() + ".json";
+      download(name, "application/json", JSON.stringify(L.makeBackup(state, Date.now())));
+      say("Saved " + name + ": " + state.records.length + " records.");
+    });
+
+    document.querySelectorAll("[data-csv]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var which = b.getAttribute("data-csv"), text = L.toCsv(which, state.records);
+        var rows = text.split("\r\n").length - 2;   // minus the header and the empty tail
+        var name = "vis-" + which + "-" + stamp() + ".csv";
+        download(name, "text/csv", text);
+        say(rows ? "Saved " + name + ": " + rows + " rows." : "Saved " + name + ": nothing logged yet, so only the header.");
+      });
+    });
+
+    $("restoreBtn").addEventListener("click", function () { $("restoreFile").click(); });
+    $("restoreFile").addEventListener("change", function () {
+      var f = $("restoreFile").files[0];
+      $("restoreFile").value = "";   // the same file can be picked again
+      if (!f) return;
+      if (f.size > MAX_BACKUP_BYTES) { say("That file is over 50 MB, too big to be a backup. Nothing was changed.", true); return; }
+      f.text().then(function (text) {
+        var p = L.parseBackup(text);
+        if (p.error) { say(p.error, true); return; }
+        var m = L.mergeRecords(state.records, p.records);
+        state.records = m.records;
+        var withSettings = $("restoreSettings").checked;
+        if (withSettings) state.settings = L.restoreSettings(state.settings, p.settings);
+        /* Send everything on the next sync: the restored records may be missing
+           from the cloud, and a re-send is a no-op upsert where they aren't. */
+        state.sync.pushMark = 0;
+        save(state);
+        applyTheme();
+        paintSettings();
+        repaintData();
+        renderCheckin();
+        say("Restored" + (p.exportedAt ? " the backup of " + fmtDay(L.dayOf(p.exportedAt, 0)) : "") + ": " +
+            m.added + " added, " + m.replaced + " replaced by a newer copy, " +
+            (p.records.length - m.added - m.replaced) + " already here" +
+            (p.skipped ? ", " + p.skipped + " unreadable and skipped" : "") + ". " +
+            (withSettings ? "Settings restored. " : "Settings left as they were. ") + "Nothing was deleted.");
+      }, function () { say("Couldn't read that file. Nothing was changed.", true); });
+    });
+  }
+
+  /* ---- SYNC --------------------------------------------------------------- */
+  /* Plain fetch to Turso's HTTP API, no SDK. Order on every run: make sure the
+     table exists, pull and merge, then push. A device's first push therefore
+     always follows a pull, and the merge only ever adds or replaces with a
+     newer copy, so no device can write "less" over "more" (Phase 0, Q2).
+     Hosted CORS is unconfirmed until the first real connect (A2); the tests
+     ran against a local sqld. */
+  var SYNC_EVERY_MS = 5 * 60000;
+  var SYNC_AFTER_SAVE_MS = 5000;
+  /* No answer in this long counts as unreachable, not as a hang. */
+  var SYNC_TIMEOUT_MS = 15000;
+
+  function sy() { return state.sync; }
+
+  function SyncError(kind, detail) { this.kind = kind; this.detail = detail || ""; }
+
+  /* A request that never got an answer. A no-cors fetch reaches the host
+     without needing CORS headers, so if it gets through, the host is up and
+     the real request was blocked by the browser: CORS (A2). */
+  function whyUnreachable(base) {
+    if (!navigator.onLine) return Promise.resolve("offline");
+    return fetch(base, { mode: "no-cors", cache: "no-store", signal: AbortSignal.timeout(SYNC_TIMEOUT_MS) })
+      .then(function () { return "cors"; }, function () { return "offline"; });
+  }
+
+  /* Runs statements as one Hrana pipeline. Resolves to one array of row
+     objects per statement; rejects with a SyncError. */
+  function pipeline(stmts) {
+    var base = L.syncBase(sy().url);
+    if (!base) return Promise.reject(new SyncError("url"));
+    var headers = { "Content-Type": "application/json" };
+    if (sy().token) headers.Authorization = "Bearer " + sy().token;
+    var body = JSON.stringify({ requests: stmts.map(function (s) {
+      return { type: "execute", stmt: { sql: s[0], args: (s[1] || []).map(L.hranaArg) } };
+    }).concat([{ type: "close" }]) });
+    return fetch(base + "/v2/pipeline", { method: "POST", headers: headers, body: body, cache: "no-store",
+                                          signal: AbortSignal.timeout(SYNC_TIMEOUT_MS) })
+      .then(null, function () {
+        return whyUnreachable(base).then(function (k) { throw new SyncError(k); });
+      })
+      .then(function (res) {
+        if (res.status === 401 || res.status === 403) throw new SyncError("401");
+        if (!res.ok) throw new SyncError("http", String(res.status));
+        return res.json().then(null, function () { throw new SyncError("http", "not JSON"); });
+      })
+      .then(function (j) {
+        return stmts.map(function (s, i) {
+          var r = j && j.results && j.results[i];
+          if (!r || r.type !== "ok") throw new SyncError("sql", r && r.error && r.error.message);
+          var x = r.response.result;
+          return x.rows.map(function (row) {
+            var o = {};
+            x.cols.forEach(function (c, k) { o[c.name] = L.hranaVal(row[k]); });
+            return o;
+          });
+        });
+      });
+  }
+
+  function syncMsg(e) {
+    if (e.kind === "ok") return "Connected.";
+    if (e.kind === "401") return "Token rejected (401). Create a new token in Turso, paste it, and test again.";
+    if (e.kind === "offline") return "Can't reach the server: offline, or the URL is wrong.";
+    if (e.kind === "cors") return "The server is up, but the browser blocked its reply (CORS). It doesn't allow calls from this page's address.";
+    if (e.kind === "url") return "That isn't a URL. It starts with libsql:// or https://.";
+    if (e.kind === "http") return "The server answered " + e.detail + ". Check the URL.";
+    if (e.kind === "sql") return "The server refused the query" + (e.detail ? ": " + e.detail : ".");
+    return "Sync failed: " + (e.detail || "unknown error") + ".";
+  }
+
+  function ago(t) {
+    var m = Math.floor((Date.now() - t) / 60000);
+    if (m < 1) return "just now";
+    if (m < 60) return m + " min ago";
+    if (m < 48 * 60) return Math.floor(m / 60) + " h ago";
+    return Math.floor(m / 1440) + " days ago";
+  }
+
+  var syncing = null, syncTimer = null, tableReady = false;
+
+  function syncSoon() {
+    if (!state || !state.sync.on) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncNow, SYNC_AFTER_SAVE_MS);
+  }
+
+  /* One pull page at a time, cursor saved after each, so a dropped connection
+     keeps what it already merged. */
+  function pullFrom() {
+    return pipeline([[L.SQL.pull, [sy().pullSeq]]]).then(function (res) {
+      var rows = res[0];
+      if (rows.length) {
+        var m = L.mergeRecords(state.records, rows.map(L.fromRow));
+        state.records = m.records;
+        sy().pullSeq = rows.reduce(function (c, r) { return Math.max(c, r.seq); }, sy().pullSeq);
+        save(state, true);
+        if (m.added || m.replaced) repaintData();
+      }
+      if (rows.length === L.PULL_PAGE) return pullFrom();
+    });
+  }
+
+  function runSync() {
+    var mark, out;
+    return (tableReady ? Promise.resolve() : pipeline([[L.SQL.create], [L.SQL.index]]).then(function () { tableReady = true; }))
+      .then(function () {
+        /* What to push is fixed before the pull: anything logged during this
+           run is newer than the mark, so the next run sends it. A local record
+           the pull replaces still goes up, and the upsert drops it as older. */
+        mark = Date.now();
+        out = L.pushSet(state.records, sy().pushMark);
+        return pullFrom();
+      })
+      .then(function pushFrom(i) {
+        i = i || 0;
+        if (i >= out.length) return;
+        return pipeline(out.slice(i, i + L.PUSH_CHUNK).map(function (r) {
+          return [L.SQL.upsert, L.rowArgs(r, sy().deviceId)];
+        })).then(function () { return pushFrom(i + L.PUSH_CHUNK); });
+      })
+      .then(function () { sy().pushMark = mark; });
+  }
+
+  function syncNow() {
+    if (!sy().on) return Promise.resolve();
+    if (syncing) return syncing;
+    clearTimeout(syncTimer);
+    $("syncState").textContent = "Syncing…";
+    syncing = runSync().then(function () {
+      sy().lastOkAt = Date.now();
+      sy().lastError = null;
+    }, function (e) {
+      if (!(e instanceof SyncError)) e = new SyncError("error", String(e && e.message || e));
+      sy().lastError = e.kind === "http" || e.kind === "sql" || e.kind === "error" ? e.kind + ": " + e.detail : e.kind;
+    }).then(function () {
+      syncing = null;
+      save(state, true);
+      paintSync();
+    });
+    return syncing;
+  }
+
+  /* lastError is stored as "kind" or "kind: detail". */
+  function storedError() {
+    var s = sy().lastError, i = s.indexOf(": ");
+    return i < 0 ? new SyncError(s) : new SyncError(s.slice(0, i), s.slice(i + 2));
+  }
+
+  function paintSync() {
+    var y = sy(), bad = y.on && y.lastError;
+    $("syncLine").hidden = !y.on || !!bad;
+    $("syncLine").textContent = y.lastOkAt ? "Synced " + ago(y.lastOkAt) : "Not synced yet";
+    $("syncBanner").hidden = !bad;
+    if (bad) $("syncBanner").innerHTML = y.lastError === "401"
+      ? 'Sync token rejected (401). Your records are safe on this device. <a href="#settings">Paste a new token in Settings</a> and test it.'
+      : "Sync failed. " + syncMsg(storedError()).replace(/\.$/, "") + ". Last good sync: " +
+        (y.lastOkAt ? ago(y.lastOkAt) : "never") + ". Your records are safe on this device and go up on the next good sync.";
+    if (document.activeElement !== $("syncUrl")) $("syncUrl").value = y.url;
+    if (document.activeElement !== $("syncToken")) $("syncToken").value = y.token;
+    $("syncOn").checked = y.on;
+    $("syncOn").disabled = !y.tested;
+    $("syncNow").disabled = !y.on || !!syncing;
+    if (!syncing) $("syncState").textContent = !y.on
+      ? (y.tested ? "Off. Tick the box to start." : "Off until Test connection passes.")
+      : (bad ? "On, but the last try failed. See the banner above." : y.lastOkAt ? "On. Synced " + ago(y.lastOkAt) + "." : "On. Not synced yet.");
+  }
+
+  function initSync() {
+    if (!sy().deviceId) {
+      var b = new Uint8Array(8);
+      crypto.getRandomValues(b);
+      sy().deviceId = Array.prototype.map.call(b, function (x) { return x.toString(16).padStart(2, "0"); }).join("");
+      save(state, true);
+    }
+    ["syncUrl", "syncToken"].forEach(function (id) {
+      $(id).addEventListener("input", function () {
+        sy()[id === "syncUrl" ? "url" : "token"] = $(id).value.trim();
+        /* A changed connection is an untested one. */
+        sy().tested = sy().on = false;
+        sy().lastError = null;
+        tableReady = false;
+        $("syncResult").textContent = "";
+        save(state, true);
+        paintSync();
+      });
+    });
+    $("syncTest").addEventListener("click", function () {
+      var r = $("syncResult");
+      r.className = "sync-result";
+      r.textContent = "Testing…";
+      $("syncTest").disabled = true;
+      pipeline([["SELECT 1"]]).then(function () { return new SyncError("ok"); }, function (e) {
+        return e instanceof SyncError ? e : new SyncError("error", String(e && e.message || e));
+      }).then(function (e) {
+        sy().tested = e.kind === "ok";
+        if (!sy().tested) sy().on = false;
+        r.className = "sync-result" + (sy().tested ? "" : " bad");
+        r.textContent = syncMsg(e);
+        $("syncTest").disabled = false;
+        save(state, true);
+        paintSync();
+      });
+    });
+    $("syncOn").addEventListener("change", function () {
+      sy().on = $("syncOn").checked && sy().tested;
+      if (!sy().on) sy().lastError = null;
+      save(state, true);
+      paintSync();
+      syncNow();
+    });
+    $("syncNow").addEventListener("click", function () { syncNow(); });
+    setInterval(function () { syncNow(); paintSync(); }, SYNC_EVERY_MS);
+    setInterval(paintSync, 60000);   // keeps "N min ago" honest
+    addEventListener("online", function () { syncNow(); });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) syncNow(); });
+    paintSync();
+    syncNow();
+  }
+
+  /* Everything that shows logged records. A pulled record and a save from
+     another window both change them under the open view. */
+  function repaintData() {
+    renderToday();
+    renderBreaks();
+    if (location.hash === "#exercises") renderExercises();
+    if (location.hash === "#outdoor") renderOutdoor();
+    if (location.hash === "#rx") renderRx();
+    if (L.findCheckin(state.records, nudgedDay)) dropNudge();
+  }
+
+  /* ---- WINDOWS ------------------------------------------------------------ */
+  /* Another window of this app (the installed one and a browser tab, say)
+     saved. Adopt its copy: this window's next save would otherwise write its
+     stale state over the other's new break.
+     ponytail: two open windows still run two schedules, so you get two
+     reminders per cycle. Elect one window (BroadcastChannel) if that happens. */
+  addEventListener("storage", function (e) {
+    if (e.key !== KEY || e.newValue == null) return;
+    try { state = L.migrate(JSON.parse(e.newValue)); } catch (err) { return; }
+    if (br().enabled !== !!startedAt) { if (br().enabled) startReminders(); else stopReminders(); }
+    paintSettings();
+    paintSync();
+    applyTheme();
+    repaintData();
+  });
+
+  /* ---- BOOT --------------------------------------------------------------- */
+  applyTheme();
+  if (br().enabled) startReminders();
+  initSettings();
+  initExport();
+  initCheckin();
+  initSync();
+  show();
+  addEventListener("hashchange", show);
+  /* The laptop window stays open all day; the date line must roll with it.
+     Outdoor and Exercises show today's totals too, so a new day repaints the
+     open view. Only on a new day: a repaint every minute rebuilds the
+     exercise cards and drops keyboard focus. */
+  var lastDay = todayKey();
+  function refresh() {
+    renderToday();
+    if (todayKey() !== lastDay) { lastDay = todayKey(); show(); }
+  }
+  setInterval(refresh, 60000);
+  setInterval(tick, 1000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
+
+  /* Done clicked on a notification after this window was quit: the service
+     worker reopened the app with ?done=1. Strip it first, so a reload can't
+     log the same break twice. */
+  if (/[?&]done=1(&|$)/.test(location.search)) {
+    history.replaceState(null, "", location.pathname + location.hash);
+    logBreak();
+  }
+
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    navigator.serviceWorker.register("service-worker.js").catch(function (e) {
+      console.warn("vis: offline cache unavailable.", e);
+    });
+    navigator.serviceWorker.addEventListener("message", function (e) {
+      if (e.data && e.data.type) handle(e.data.type);
+    });
+  }
+})();
+</script>
+</body>
+</html>

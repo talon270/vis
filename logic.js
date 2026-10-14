@@ -232,11 +232,11 @@
     return ymd(d);
   }
 
-  /* "selene" is Helth's dark palette, "selene-day" its light one. */
+  /* "paper" is the light palette, "ink" its dark one. */
   function themeId(pref, systemDark) {
-    if (pref === "dark") return "selene";
-    if (pref === "light") return "selene-day";
-    return systemDark ? "selene" : "selene-day";
+    if (pref === "dark") return "ink";
+    if (pref === "light") return "paper";
+    return systemDark ? "ink" : "paper";
   }
 
   /* ---- BREAKS ------------------------------------------------------------- */

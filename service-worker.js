@@ -5,9 +5,10 @@
    network at all.
 
    Network-first for every request, cache as the fallback. The shell is seven
-   small files, so the cost is one round trip per file while online. The gain
-   is that an edited index.html and logic.js always arrive together; a
-   cache-first worker can serve a new page against an old logic.js.
+   small files and three fonts (45 KB), so the cost is one round trip per file
+   while online. The gain is that an edited index.html and logic.js always
+   arrive together; a cache-first worker can serve a new page against an old
+   logic.js.
    ponytail: no timeout on the network leg, so a hanging connection waits for
    the browser's own timeout. Add a race against the cache if that bites.
 
@@ -18,7 +19,7 @@
    Bump CACHE when SHELL changes.
    ========================================================================== */
 
-const CACHE = "vis-shell-1";
+const CACHE = "vis-shell-3";
 const SHELL = [
   "./",
   "./index.html",
@@ -26,7 +27,10 @@ const SHELL = [
   "./manifest.webmanifest",
   "./icon.svg",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./fonts/plexmono-400.woff2",
+  "./fonts/plexmono-600.woff2",
+  "./fonts/plexmono-700.woff2"
 ];
 
 self.addEventListener("install", (event) => {

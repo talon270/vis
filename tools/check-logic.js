@@ -349,11 +349,11 @@ assert.strictEqual(cmp([]).ready, false, "no records: hidden, no throw");
 }
 
 /* ---- theme ---- */
-assert.strictEqual(L.themeId("system", true), "selene");
-assert.strictEqual(L.themeId("system", false), "selene-day");
-assert.strictEqual(L.themeId("dark", false), "selene");
-assert.strictEqual(L.themeId("light", true), "selene-day");
-assert.strictEqual(L.themeId(undefined, false), "selene-day", "missing preference follows the system");
+assert.strictEqual(L.themeId("system", true), "ink");
+assert.strictEqual(L.themeId("system", false), "paper");
+assert.strictEqual(L.themeId("dark", false), "ink");
+assert.strictEqual(L.themeId("light", true), "paper");
+assert.strictEqual(L.themeId(undefined, false), "paper", "missing preference follows the system");
 
 /* ---- sync (B10): the merge, the empty-device guard, the seq cursor ---- */
 {

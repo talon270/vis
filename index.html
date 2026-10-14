@@ -3,48 +3,77 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#202930" />
+<meta name="theme-color" content="#141413" />
 <meta name="description" content="20-20-20 breaks, outdoor time and a prescription log. Offline, no account." />
 <title>vis</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="manifest" href="manifest.webmanifest" />
 
 <!--
-  Theme tokens are Helth's selene (dark) and selene-day (light), copied from
-  Helth/css/palettes.css under names that say what they are for here. Dark is
-  also :root, so the page is correct before any script runs.
+  Theme tokens: "paper" (light) is taken colour for colour from one of my study
+  guides. That page is light-only, so "ink" (dark) is derived from it here. The look is the
+  guide's too: IBM Plex Mono throughout, square corners, 3 px ink borders, hard
+  offset shadows, black title bars, one red. Dark is also :root, so the page is
+  correct before any script runs. The font is self-hosted in fonts/ (OFL): no CDN.
 -->
 <style>
-:root, html[data-theme="selene"] {
+:root, html[data-theme="ink"] {
   color-scheme: dark;
-  --page: #202930;          /* bg0 */
-  --surface: #30383E;       /* bg1 */
-  --rail: #0E1216;          /* wh-bg-deep */
-  --ink-strong: #F6F7F8;    /* fg0 */
-  --ink: #ECEFF1;           /* fg1 */
-  --muted: #96A2A8;         /* fg4 */
-  --accent: #CFD8DC;        /* primary */
-  --accent-soft: rgba(207,216,220,.16);
-  --line: rgba(150,162,168,.16);
-  --line-2: rgba(150,162,168,.30);
-  --warn: #F0A038;          /* yellow */
-  --warn-rgb: 240,160,56;
+  /* Derived; the guide has no dark theme. Contrast on page / surface:
+     ink 16.5/15.0, muted 8.3/7.6, accent-text 7.2/6.5, red as a graphic 5.2/4.7. */
+  --page: #141413;
+  --surface: #1e1d1b;
+  --soft: #2a2926;          /* tracks, grid lines, "not a desk day" */
+  --rail: #0a0a09;
+  --rail-ink: #f4f2ec;
+  --rail-muted: #b3aea4;
+  --ink-strong: #f4f2ec;
+  --ink: #f4f2ec;
+  --muted: #b3aea4;
+  --accent: #ff3b00;        /* fills and graphics only, never small text */
+  --accent-text: #ff7a50;   /* red that is safe as text */
+  --on-accent: #111111;     /* text on a red fill: 5.3:1 */
+  --line: #d6d3cc;          /* borders and hard shadows */
+  --warn: var(--accent-text);
+  --series-2: var(--accent-text);
 }
-html[data-theme="selene-day"] {
+
+html[data-theme="paper"] {
   color-scheme: light;
-  --page: #E5E9EB;          /* bg0 */
-  --surface: #F3F5F6;       /* wh-bg-deep: cards sit lighter than the page in daylight */
-  --rail: #D5D9DB;          /* bg1 */
-  --ink-strong: #13171A;
-  --ink: #262E33;
-  --muted: #525E65;
-  --accent: #455A64;
-  --accent-soft: rgba(69,90,100,.16);
-  --line: rgba(82,94,101,.16);
-  --line-2: rgba(82,94,101,.30);
-  --warn: #825500;
-  --warn-rgb: 130,85,0;
+  /* The guide's own: bg, paper, soft, ink, accent; #444 is its .source grey and
+     #a52900 its kicker red. Contrast on page / surface: ink 12.6/16.9,
+     muted 6.5/8.7, accent-text 4.8/6.4. Red as a graphic is 3.2:1 on paper but
+     2.4:1 on the grey page, so no red graphic sits directly on the page. */
+  --page: #d6d3cc;
+  --surface: #f4f2ec;
+  --soft: #e7e3da;
+  --rail: #111111;          /* the guide's black top bar, turned sideways */
+  --rail-ink: #f4f2ec;
+  --rail-muted: #b3aea4;
+  --ink-strong: #111111;
+  --ink: #111111;
+  --muted: #444444;
+  --accent: #ff3b00;
+  --accent-text: #a52900;
+  --on-accent: #111111;
+  --line: #111111;
+  --warn: var(--accent-text);
+  --series-2: var(--accent-text);
 }
+
+/* Theme-independent: type and motion. Curves are Emil Kowalski's strong
+   ease-out and ease-in-out; the built-in keywords are too weak to read. */
+:root {
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, "Courier New", monospace;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* Latin subset only, with Google's unicode-range, so a glyph outside it
+   (≤, for one) falls through to the next font instead of a blank box. */
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/plexmono-400.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/plexmono-600.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 700; font-display: swap; src: url(fonts/plexmono-700.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 
 * { box-sizing: border-box; }
 /* A class that sets display (.row, .backfill) must not beat the attribute. */
@@ -53,14 +82,17 @@ body {
   margin: 0;
   background: var(--page);
   color: var(--ink);
-  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 15px/1.55 var(--mono);
 }
-h1, h2 { color: var(--ink-strong); margin: 0; line-height: 1.25; }
-h1 { font-size: 26px; font-weight: 650; }
-h2 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+h1, h2 { color: var(--ink-strong); margin: 0; line-height: 1.1; font-weight: 700; }
+/* The guide's display type: big, bold, tracked tight. Smaller than its 7rem,
+   because here a title sits above controls, not above an essay. */
+h1 { font-size: clamp(34px, 4.6vw, 56px); line-height: .95; letter-spacing: -.07em; }
+h2 { font-size: 17px; letter-spacing: -.03em; margin-bottom: 6px; }
 p { margin: 0; }
-code { font-size: 13px; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code { font-size: 13px; font-family: var(--mono); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+::selection { background: var(--accent); color: var(--on-accent); }
 
 .app { display: flex; min-height: 100vh; }
 
@@ -69,93 +101,146 @@ code { font-size: 13px; }
   flex: none; width: 212px;
   position: sticky; top: 0; height: 100vh;
   background: var(--rail);
-  border-right: 1px solid var(--line);
+  border-right: 4px solid var(--accent);
   padding: 20px 12px;
   display: flex; flex-direction: column; gap: 2px;
 }
 .brand {
   display: flex; align-items: center; gap: 10px;
   padding: 4px 12px 18px;
-  color: var(--ink-strong); font-weight: 650; font-size: 18px;
+  color: var(--rail-ink); font-weight: 700; font-size: 22px; letter-spacing: -.06em;
 }
 .brand img { width: 28px; height: 28px; }
 .nav a {
-  display: block; padding: 9px 12px; border-radius: 8px;
-  color: var(--muted); text-decoration: none; font-weight: 500;
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  color: var(--rail-muted); text-decoration: none; font-size: 13px; font-weight: 700;
+  transition: color 150ms ease;
 }
-.nav a:hover { color: var(--ink); background: var(--line); }
-.nav a[aria-current="page"] { color: var(--ink-strong); background: var(--accent-soft); }
+.nav a:not([aria-current]):hover { color: var(--accent); }
+.nav a[aria-current="page"] { color: var(--on-accent); }
+/* One highlight that slides to the active section, so a switch shows where you
+   went. Transform only; placed by placeInd(). Spatial consistency, tens of
+   times a day, so 200 ms and nothing fancier. */
+.nav-ind {
+  position: absolute; z-index: 0; top: 0; left: 12px; right: 12px;
+  background: var(--accent); pointer-events: none;
+}
+.nav-ind.ready { transition: transform 200ms var(--ease-in-out); }
+/* The active label is ink on the red block. If the block was never placed
+   (script error), paint the tab itself, so the label can't sit ink on black. */
+.nav:not(:has(.nav-ind.ready)) a[aria-current="page"] { background: var(--accent); }
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* Lucide's own stroke 2: the guide is heavy everywhere, so the icons are too. */
+.ic {
+  width: 18px; height: 18px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
 
 /* Content is centred in the space beside the sidebar, never pinned left. */
 main { flex: 1; min-width: 0; padding: 36px 40px 48px; }
 .wrap { max-width: 1080px; margin: 0 auto; }
 
-.head { margin-bottom: 24px; }
+/* A 4 px rule under each title, as the guide closes its header and sections. */
+.head { margin-bottom: 26px; padding-bottom: 16px; border-bottom: 4px solid var(--line); }
 .sub { color: var(--muted); margin-top: 4px; }
+.head .sub { margin-top: 12px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
 
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+/* Gap wider than the 6 px shadow, so one card's shadow never touches the next. */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; }
 .card {
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 20px;
+  border: 3px solid var(--line);
+  box-shadow: 6px 6px 0 var(--line);
+  padding: 18px;
   display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
 }
 .card p { color: var(--muted); }
-.tag {
-  font-size: 12px; color: var(--muted);
-  border: 1px solid var(--line-2); border-radius: 999px; padding: 1px 9px;
+/* The card's title is the guide's black bar, edge to edge. */
+.card > h2:first-child, .ex-card > .ex-meta {
+  align-self: stretch; margin: -18px -18px 6px; padding: 9px 15px;
+  background: var(--line); color: var(--surface);
+  font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
 }
+.ex-card > .ex-meta h2 { color: var(--surface); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin: 0; }
+.tag {
+  font-size: 12px; font-weight: 700; color: var(--surface); background: var(--line);
+  padding: 2px 8px;
+}
+.ex-meta .tag { color: var(--line); background: var(--surface); }
 
 .banners:empty { display: none; }
 .banners { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+/* Anything that wants your attention is the guide's red notice block. */
 .banner {
-  background: rgba(var(--warn-rgb), .14);
-  border-left: 3px solid var(--warn);
-  border-radius: 6px; padding: 10px 14px; color: var(--ink);
+  background: var(--accent); color: var(--on-accent);
+  border: 3px solid var(--line); padding: 12px 15px; font-weight: 600;
 }
-.note, .card .note { color: var(--warn); margin-top: 6px; }
+.banner a, .banner strong { color: var(--on-accent); }
+.note, .card .note { color: var(--accent-text); font-weight: 600; margin-top: 6px; }
 
 .seg { display: flex; gap: 6px; flex-wrap: wrap; }
 .seg label {
   display: flex; align-items: center; gap: 6px; cursor: pointer;
-  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 12px;
+  border: 2px solid var(--line); padding: 5px 11px; background: var(--surface);
 }
-.seg label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); color: var(--ink-strong); }
+.seg label:has(input:checked) { background: var(--line); color: var(--surface); }
 .seg input { accent-color: var(--accent); margin: 0; }
-select, input[type="time"] {
-  font: inherit; color: var(--ink); background: var(--page);
-  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px;
+select, input[type="time"], input[type="number"], input[type="date"], .sync-fields input.field {
+  font: inherit; color: var(--ink); background: var(--surface);
+  border: 2px solid var(--line); border-radius: 0; padding: 6px 10px;
 }
 .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--muted); }
 .check { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--ink); }
 .check input { accent-color: var(--accent); margin: 0; width: 16px; height: 16px; flex: none; }
 
+/* The guide's .print button: red, ink text, ink border, hard shadow. */
 .btn {
-  font: inherit; font-weight: 600; cursor: pointer;
-  color: var(--page); background: var(--accent);
-  border: 1px solid var(--accent); border-radius: 8px; padding: 7px 14px;
+  font: inherit; font-weight: 700; cursor: pointer;
+  color: var(--on-accent); background: var(--accent);
+  border: 2px solid var(--line); border-radius: 0; padding: 7px 14px;
+  box-shadow: 3px 3px 0 var(--line);
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  /* Press feedback: the button sinks into its own shadow. Only transform is
+     animated; the shadow drops at once, which reads as the same motion. */
+  transition: transform 100ms var(--ease-out);
 }
-.btn:hover { filter: brightness(1.08); }
-.btn.ghost { color: var(--ink); background: transparent; border-color: var(--line-2); }
-.btn.ghost:hover { background: var(--line); filter: none; }
+.btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: none; }
+.btn.ghost { color: var(--ink); background: var(--surface); }
+@media (hover: hover) and (pointer: fine) {
+  .btn.ghost:hover:not(:disabled) { background: var(--soft); }
+}
 
 /* Check-in: three rows of 0–3. The radio is hidden visually but stays the
    focusable control, so arrow keys and screen readers work as normal. */
 .ci { display: flex; flex-direction: column; gap: 10px; }
 .sym { display: flex; align-items: center; gap: 12px; }
-.sym-name { width: 76px; color: var(--ink); }
+.sym-name { width: 90px; color: var(--ink); }
 .seg.num label { position: relative; width: 38px; justify-content: center; padding: 5px 0; font-variant-numeric: tabular-nums; }
 .seg.num input { position: absolute; opacity: 0; pointer-events: none; }
-.seg.num label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* Solid, not the settings tint: the chosen score is the thing being read back. */
-.seg.num label:has(input:checked) { background: var(--accent); color: var(--page); }
+.seg.num label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* Red, not the settings ink: the chosen score is the thing being read back. */
+.seg.num label:has(input:checked) { background: var(--accent); color: var(--on-accent); }
 .ci .btn { align-self: flex-start; margin-top: 4px; }
 .backfill { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .backfill strong { color: var(--ink-strong); }
 
+/* Once a day, when the day turns done: the one place with a delight budget. */
+.count strong { position: relative; display: inline-block; }
+.count strong.pop { animation: pop 320ms var(--ease-out); }
+@keyframes pop { 40% { transform: scale(1.14); } }
+.burst { position: absolute; left: 50%; top: 50%; pointer-events: none; }
+.burst i {
+  position: absolute; width: 7px; height: 7px; margin: -3.5px; background: var(--accent);
+  animation: burst 700ms var(--ease-out) forwards;
+}
+@keyframes burst {
+  from { transform: rotate(var(--a)) translateX(10px); opacity: 1; }
+  to { transform: rotate(var(--a)) translateX(40px) scale(.5); opacity: 0; }
+}
 .count strong {
-  font-size: 34px; font-weight: 650; line-height: 1; margin-right: 4px;
+  font-size: 36px; font-weight: 700; letter-spacing: -.05em; line-height: 1; margin-right: 4px;
   color: var(--ink-strong); font-variant-numeric: tabular-nums;
 }
 
@@ -163,24 +248,25 @@ select, input[type="time"] {
    its break count and a check-in dot, so the raw numbers sit beside each
    verdict. */
 .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; align-self: stretch; margin: 0; padding: 0; list-style: none; }
-.cal-head { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: -6px; }
+.cal-head { font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; margin-bottom: -6px; }
 .cal li {
-  height: 42px; border-radius: 6px; border: 1px solid var(--line-2); color: var(--muted);
+  height: 42px; border: 2px solid var(--line); color: var(--muted);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   font-size: 13px; font-variant-numeric: tabular-nums;
 }
-.cal li::after { content: ""; width: 6px; height: 6px; border-radius: 50%; border: 1px solid currentColor; }
+.cal li::after { content: ""; width: 6px; height: 6px; border: 1px solid currentColor; }
 .cal li.ci::after { background: currentColor; }
 .cal li.blank { border-color: transparent; }
 .cal li.blank::after { display: none; }
 .cal li.open { color: var(--ink); }
-.cal li.now { outline: 2px solid var(--ink-strong); outline-offset: 1px; }
-.cal .done, .sw.done { background: var(--accent); border-color: var(--accent); color: var(--page); }
-.cal .grace, .sw.grace { border: 1px dashed var(--warn); color: var(--warn); }
-.cal .off, .sw.off { background: var(--line); border-color: transparent; }
+.cal li.now { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* Done is ink, not red: red is kept for what needs attention. */
+.cal .done, .sw.done { background: var(--line); border-color: var(--line); color: var(--surface); }
+.cal .grace, .sw.grace { border: 2px dashed var(--accent-text); color: var(--accent-text); }
+.cal .off, .sw.off { background: var(--soft); border-color: transparent; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; }
 .legend span { display: flex; align-items: center; gap: 6px; }
-.sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line-2); }
+.sw { width: 12px; height: 12px; border: 2px solid var(--line); }
 
 /* Bottom-right on a laptop; full width above the bottom bar on a phone. */
 .toasts {
@@ -191,50 +277,81 @@ select, input[type="time"] {
 .toast {
   margin: 0; padding: 10px 14px;
   background: var(--surface); color: var(--ink);
-  border: 1px solid var(--line-2); border-radius: 10px;
-  box-shadow: 0 6px 24px rgba(0,0,0,.28);
+  border: 3px solid var(--line);
+  box-shadow: 6px 6px 0 var(--line);
+  /* In from the bottom, out the same way. Transitions, not keyframes, so a
+     second toast fired mid-entry retargets instead of restarting. */
+  transition: opacity 400ms ease, transform 400ms ease;
 }
-.toast.rem { border-left: 3px solid var(--warn); display: flex; flex-direction: column; gap: 8px; }
+@starting-style { .toast { opacity: 0; transform: translateY(100%); } }
+.toast.out { opacity: 0; transform: translateY(100%); }
+.toast.rem { border-left: 10px solid var(--accent); display: flex; flex-direction: column; gap: 8px; }
 .toast.rem strong { color: var(--ink-strong); }
 .acts { display: flex; gap: 6px; flex-wrap: wrap; }
 
 dialog.look {
   width: min(420px, calc(100vw - 32px)); padding: 32px 28px;
   background: var(--surface); color: var(--ink); text-align: center;
-  border: 1px solid var(--line-2); border-radius: 16px;
+  border: 3px solid var(--line); box-shadow: 8px 8px 0 var(--line);
 }
-dialog.look::backdrop { background: rgba(0,0,0,.6); }
+dialog.look::backdrop { background: rgba(17,17,17,.62); }
+dialog.look > h2:first-child {
+  margin: -32px -28px 6px; padding: 10px 15px; background: var(--line); color: var(--surface);
+  font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+}
+/* Entry only: closing is instant, because the 20 s ends on a beep and the
+   point is to look away, not at a fade. Modal, so centred, not anchored. */
+dialog.look[open] { transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out); }
+dialog.look[open]::backdrop { transition: opacity 200ms var(--ease-out); }
+@starting-style {
+  dialog.look[open] { opacity: 0; transform: scale(.96); }
+  dialog.look[open]::backdrop { opacity: 0; }
+}
+/* Time left at a glance, out of the corner of the eye. No breathing pulse:
+   movement would pull your eyes back to the screen during the one break meant
+   to keep them off it. Linear, because it is progress. */
+.look-dial { position: relative; width: 196px; height: 196px; margin: 16px auto 14px; display: grid; place-items: center; }
+.dial { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.dial circle { fill: none; stroke-width: 8; }
+.dial .track { stroke: var(--soft); }
+.dial .arc { stroke: var(--accent); stroke-dasharray: 100; stroke-dashoffset: 0; }
+.look-dial .arc.run { animation: deplete calc(var(--look-n, 20) * 1s) linear forwards; }
+@keyframes deplete { to { stroke-dashoffset: 100; } }
 dialog.look .sub { margin: 0 0 20px; }
 .secs {
-  font-size: 96px; font-weight: 650; line-height: 1; margin: 18px 0 14px;
+  font-size: 84px; font-weight: 700; letter-spacing: -.07em; line-height: 1; margin: 0;
   color: var(--ink-strong); font-variant-numeric: tabular-nums;
 }
 
 /* Outdoor. The timer and the +15 are thumb targets on a phone. */
-progress { width: 100%; height: 10px; accent-color: var(--accent); align-self: stretch; }
+/* Outdoor minutes against the target, as a ring with the raw count beside it. */
+.od-top { display: flex; align-items: center; gap: 16px; }
+.od-ring { position: relative; width: 84px; height: 84px; flex: none; display: grid; place-items: center; color: var(--ink); }
+.od-ring .arc { stroke-dashoffset: 100; transition: stroke-dashoffset 250ms var(--ease-out); }
+.od-ring .ic { width: 26px; height: 26px; }
 .btn.big { padding: 14px 22px; font-size: 17px; }
 .btn.sm { padding: 3px 10px; font-size: 13px; }
 .od-acts { display: flex; gap: 10px; flex-wrap: wrap; }
-.card .od-clock { margin: 0; font-size: 44px; font-weight: 650; line-height: 1.1; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+.card .od-clock { margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -.05em; line-height: 1.1; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
 .od-list { list-style: none; margin: 0; padding: 0; align-self: stretch; display: flex; flex-direction: column; gap: 8px; }
-.od-list li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; color: var(--ink); }
+.od-list li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 2px solid var(--line); padding-top: 8px; color: var(--ink); }
 .od-list .when { color: var(--muted); font-variant-numeric: tabular-nums; }
 .od-list .btn { margin-left: auto; }
 .od-review { display: flex; flex-direction: column; gap: 8px; align-self: stretch; }
-input[type="number"] {
-  font: inherit; color: var(--ink); background: var(--page); width: 6em;
-  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px;
-}
+input[type="number"] { width: 6em; }
 #runBanner, #syncBanner { margin-bottom: 20px; }
 #odTarget { align-self: stretch; }
 #odTarget p + p { margin-top: 10px; }
 
 /* Exercises. Every colour is a token, so both themes follow. */
 /* Browser-default link blue is unreadable on the dark page and off-palette on the light one. */
-main a { color: var(--accent); text-underline-offset: 2px; }
+/* The guide's links: ink, 2 px underline, red on hover. Red text at body size
+   fails contrast on the grey page, so links never rest in red. */
+main a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+main a:hover { color: var(--accent-text); }
 .lede { color: var(--muted); margin-top: 4px; max-width: 62ch; }
 .ex-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.tag.on { color: var(--ink); border-color: var(--accent); }
+.tag.on, .ex-meta .tag.on { color: var(--on-accent); background: var(--accent); }
 .ex-steps { margin: 0; padding-left: 20px; color: var(--muted); }
 .ex-steps li { margin: 2px 0; }
 .ex-src { font-size: 13px; }
@@ -246,27 +363,23 @@ dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
 .ex-cue { color: var(--ink); min-height: 3.1em; margin-bottom: 14px; }
 .ex-acts { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .ring {
-  width: 160px; height: 160px; border-radius: 50%; border: 2px solid var(--line-2);
+  width: 160px; height: 160px; border-radius: 50%; border: 3px solid var(--line);
   display: flex; align-items: center; justify-content: center; text-align: center;
   color: var(--muted); font-weight: 600;
 }
-.ring.on { background: var(--accent); border-color: var(--accent); color: var(--page); }
+.ring.on { background: var(--accent); color: var(--on-accent); }
 .pair { display: flex; gap: 20px; }
 .pair .ring { width: 104px; height: 104px; font-size: 13px; }
 .fig8 { width: 100%; max-width: 340px; }
-.fig8 path { fill: none; stroke: var(--line-2); stroke-width: 2; }
+.fig8 path { fill: none; stroke: var(--muted); stroke-width: 3; }
 .fig8 circle { fill: var(--accent); }
-.orbit { position: relative; width: 180px; height: 180px; border: 2px solid var(--line-2); border-radius: 50%; }
+.orbit { position: relative; width: 180px; height: 180px; border: 3px solid var(--line); border-radius: 50%; }
 .orbit i { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--accent); }
 
 /* Rx. The table is fixed-layout so four columns of inputs fit a 390 px phone. */
 .rx-form { display: flex; flex-direction: column; gap: 10px; align-self: stretch; }
-input[type="date"] {
-  font: inherit; color: var(--ink); background: var(--page);
-  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px;
-}
 .rx-tbl { width: 100%; table-layout: fixed; border-collapse: collapse; }
-.rx-tbl th { font-weight: 500; font-size: 13px; color: var(--muted); text-align: left; padding: 2px 6px 2px 0; }
+.rx-tbl th { font-weight: 700; font-size: 12px; text-transform: uppercase; color: var(--muted); text-align: left; padding: 2px 6px 2px 0; }
 .rx-tbl thead th:first-child { width: 64px; }
 .rx-tbl th span { display: block; font-size: 11px; }
 .rx-tbl td { padding: 3px 6px 3px 0; }
@@ -279,21 +392,21 @@ input[type="date"] {
 @media (max-width: 760px) { .rx-cards { grid-template-columns: 1fr; } }
 .rx-wide { grid-column: 1 / -1; align-items: stretch; }
 #rxChart svg { display: block; width: 100%; height: auto; }
-.rx-grid { stroke: var(--line); }
+.rx-grid { stroke: var(--soft); }
 .rx-axis { fill: var(--muted); font-size: 11px; font-family: inherit; }
-.rx-od { stroke: var(--accent); fill: var(--accent); }
-.rx-os { stroke: var(--warn); fill: var(--warn); }
-.rx-line { fill: none; stroke-width: 2; }
+.rx-od { stroke: var(--ink); fill: var(--ink); }
+.rx-os { stroke: var(--series-2); fill: var(--series-2); }
+.rx-line { fill: none; stroke-width: 3; }
 .rx-line.rx-os { stroke-dasharray: 6 4; }
 .rx-band { stroke: none; opacity: .22; }
 .rx-key { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
-.rx-key i { display: inline-block; width: 22px; height: 0; border-top: 2px solid var(--accent); vertical-align: middle; margin-right: 6px; }
-.rx-key i.os { border-top: 2px dashed var(--warn); }
+.rx-key i { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--ink); vertical-align: middle; margin-right: 6px; }
+.rx-key i.os { border-top: 3px dashed var(--series-2); }
 .rx-sum { margin: 0; padding-left: 18px; color: var(--ink); }
 .rx-sum li + li { margin-top: 6px; }
 .od-list .btn + .btn { margin-left: 0; }
 .rx-eyes { flex-basis: 100%; font-variant-numeric: tabular-nums; }
-.rx-alarm { border-left: 3px solid var(--warn); }
+.rx-alarm { border-left: 12px solid var(--accent); }
 #rxWarn { align-self: stretch; }
 #rxWarn p + p { margin-top: 10px; }
 #rxWarn strong { color: var(--ink-strong); }
@@ -305,7 +418,7 @@ input[type="date"] {
 @media (max-width: 1100px) { .facts-cards { grid-template-columns: 1fr; } }
 .facts strong { color: var(--ink-strong); }
 .nw { white-space: nowrap; }
-.facts h3 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--ink-strong); }
+.facts h3 { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
 .facts-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 760px) { .facts-split { grid-template-columns: 1fr; } }
 
@@ -316,9 +429,9 @@ input[type="date"] {
 .cmp-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-self: stretch; width: 100%; }
 @media (max-width: 760px) { .cmp-body { grid-template-columns: 1fr; } }
 .cmp-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.cmp-tbl th, .cmp-tbl td { padding: 6px 4px; text-align: right; border-bottom: 1px solid var(--line); }
+.cmp-tbl th, .cmp-tbl td { padding: 7px 8px; text-align: right; border: 1px solid var(--line); }
 .cmp-tbl th:first-child, .cmp-tbl td:first-child { text-align: left; }
-.cmp-tbl thead th { font-weight: 600; color: var(--ink-strong); vertical-align: bottom; }
+.cmp-tbl thead th { font-weight: 700; font-size: 12px; text-transform: uppercase; background: var(--line); color: var(--surface); vertical-align: bottom; }
 .cmp-tbl tbody th { font-weight: 400; color: var(--muted); }
 .cmp-tbl td { color: var(--ink-strong); }
 .cmp-text { display: flex; flex-direction: column; gap: 10px; }
@@ -340,19 +453,16 @@ input[type="date"] {
 .sync-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-self: stretch; width: 100%; }
 @media (max-width: 760px) { .sync-body { grid-template-columns: 1fr; } }
 .sync-fields, .sync-side { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; min-width: 0; }
-.sync-fields label.lbl { color: var(--ink); font-weight: 500; margin-bottom: -6px; }
-.sync-fields input.field {
-  font: inherit; color: var(--ink); background: var(--page); width: 100%;
-  border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px;
-}
+.sync-fields label.lbl { color: var(--ink); font-weight: 700; margin-bottom: -6px; }
+.sync-fields input.field { width: 100%; }
 .sync-result { color: var(--ink); }
 .sync-result.bad { color: var(--warn); }
 .card p.sync-result { color: var(--ink); }
 .card p.sync-result.bad { color: var(--warn); }
 .card p.sync-result:empty { display: none; }
 .storage-card .row { margin: 8px 0; }
-.card h3 { margin: 14px 0 0; font-size: 14px; font-weight: 600; color: var(--ink-strong); }
-.btn:disabled { opacity: .5; cursor: default; filter: none; }
+.card h3 { margin: 14px 0 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
+.btn:disabled { opacity: .5; cursor: default; box-shadow: none; }
 
 @media (max-width: 760px) {
   .app { display: block; }
@@ -361,14 +471,33 @@ input[type="date"] {
     width: auto; height: auto;
     flex-direction: row; gap: 0;
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-    border-right: 0; border-top: 1px solid var(--line);
+    border-right: 0; border-top: 4px solid var(--accent);
   }
   .brand { display: none; }
   /* Content-sized cells: equal cells pack "Exercises" edge to edge into "Outdoor". */
-  .nav a { flex: 1 1 auto; text-align: center; font-size: 12px; padding: 10px 2px; }
+  .nav a { flex: 1 1 auto; flex-direction: column; gap: 3px; text-align: center; font-size: 12px; padding: 8px 2px; }
+  .nav a .ic { width: 20px; height: 20px; }
+  /* On the bar the tabs differ in width, so the red block is 1 px wide and
+     scaled to the tab: transform only, no animated width. Square corners are
+     what make scaling it safe; a rounded pill would stretch. */
+  .nav-ind { left: 0; right: auto; width: 1px; transform-origin: 0 0; }
   main { padding: 20px 16px 96px; }
-  h1 { font-size: 22px; }
-  .toasts { left: 16px; right: 16px; bottom: calc(64px + env(safe-area-inset-bottom)); max-width: none; align-items: stretch; }
+  h1 { font-size: 34px; }
+  .toasts { left: 16px; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); max-width: none; align-items: stretch; }
+}
+
+/* Fewer and gentler, not none: fades stay, movement goes. The look ring steps
+   once a second instead of sweeping, so it still says how long is left. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-ind.ready { transition: none; }
+  .btn:active:not(:disabled) { transform: none; box-shadow: 3px 3px 0 var(--line); }
+  .toast { transition: opacity 200ms ease; }
+  .toast.out { transform: none; }
+  dialog.look[open] { transition: opacity 200ms ease; }
+  @starting-style { dialog.look[open] { transform: none; } }
+  .look-dial .arc.run { animation-timing-function: steps(var(--look-n, 20), end); }
+  .od-ring .arc { transition: none; }
+  .count strong.pop { animation: none; }
 }
 </style>
 
@@ -390,16 +519,33 @@ input[type="date"] {
 </head>
 
 <body>
+<!-- Icons: Lucide (lucide.dev), ISC; download, upload and square derive from Feather, MIT.
+     Full notices in LICENSE-lucide.txt. Stroke styling is set in CSS (.ic). -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-calendar-check" viewBox="0 0 24 24"><path d="M8 2v3"/> <path d="M16 2v3"/> <rect x="3" y="3" width="18" height="18" rx="2"/> <path d="M3 9h18"/> <path d="m9 15 2 2 4-4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/> <circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-trees" viewBox="0 0 24 24"><path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z"/> <path d="M7 16v6"/> <path d="M13 19v3"/> <path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5"/></symbol>
+  <symbol id="i-glasses" viewBox="0 0 24 24"><circle cx="6" cy="15" r="4"/> <circle cx="18" cy="15" r="4"/> <path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/> <path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/> <path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></symbol>
+  <symbol id="i-book-open" viewBox="0 0 24 24"><path d="M12 5v16"/> <path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/> <circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/> <line x1="12" x2="15" y1="14" y2="11"/> <circle cx="12" cy="14" r="8"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></symbol>
+  <symbol id="i-square" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 3v12"/> <path d="m17 8-5-5-5 5"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></symbol>
+  <symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/> <path d="M21 3v5h-5"/> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/> <path d="M8 16H3v5"/></symbol>
+</svg>
 <div class="app">
 
 <nav class="nav" aria-label="Sections">
   <div class="brand"><img src="icon.svg" alt="" />vis</div>
-  <a href="#today">Today</a>
-  <a href="#exercises">Exercises</a>
-  <a href="#outdoor">Outdoor</a>
-  <a href="#rx">Rx</a>
-  <a href="#facts">Facts</a>
-  <a href="#settings">Settings</a>
+  <span class="nav-ind" id="navInd" aria-hidden="true"></span>
+  <a href="#today"><svg class="ic" aria-hidden="true"><use href="#i-calendar-check"/></svg><span>Today</span></a>
+  <a href="#exercises"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg><span>Exercises</span></a>
+  <a href="#outdoor"><svg class="ic" aria-hidden="true"><use href="#i-trees"/></svg><span>Outdoor</span></a>
+  <a href="#rx"><svg class="ic" aria-hidden="true"><use href="#i-glasses"/></svg><span>Rx</span></a>
+  <a href="#facts"><svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg><span>Facts</span></a>
+  <a href="#settings"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg><span>Settings</span></a>
 </nav>
 
 <main>
@@ -429,7 +575,7 @@ input[type="date"] {
         <p id="breakOff">Reminders are off on this device. <a href="#settings">Turn them on in Settings</a>.</p>
         <p id="breakOn" hidden></p>
         <p class="note" id="breakInWindow" hidden>Reminders show inside this window only, so keep it where you can see it.</p>
-        <button type="button" class="btn" id="lookNow">Look away for 20 s</button>
+        <button type="button" class="btn" id="lookNow"><svg class="ic" aria-hidden="true"><use href="#i-timer"/></svg>Look away for 20 s</button>
       </div>
       <div class="card">
         <h2>Check-in</h2>
@@ -482,13 +628,18 @@ input[type="date"] {
     <div class="cards">
       <div class="card">
         <h2>Today</h2>
-        <p class="count"><strong id="odTotal">0</strong> <span id="odOf"></span></p>
-        <progress id="odBar" aria-label="Outdoor minutes today, target 120"></progress>
+        <div class="od-top">
+          <div class="od-ring" id="odBar" role="progressbar" aria-label="Outdoor minutes today" aria-valuemin="0" aria-valuemax="120" aria-valuenow="0">
+            <svg class="dial" viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="54"/><circle class="arc" id="odArc" cx="60" cy="60" r="54" pathLength="100"/></svg>
+            <svg class="ic" aria-hidden="true"><use href="#i-trees"/></svg>
+          </div>
+          <p class="count"><strong id="odTotal">0</strong> <span id="odOf"></span></p>
+        </div>
         <p id="odSplit"></p>
         <p class="od-clock" id="odClock" hidden></p>
         <p id="odRunNote" hidden></p>
         <div class="od-acts">
-          <button type="button" class="btn big" id="odToggle">Start timer</button>
+          <button type="button" class="btn big" id="odToggle"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg><span>Start timer</span></button>
           <button type="button" class="btn big ghost" id="odQuick"></button>
         </div>
         <p id="odQuickNote"></p>
@@ -751,8 +902,8 @@ input[type="date"] {
         <h2>Storage</h2>
         <p>Saved in this browser under <code>vis.v1</code>, schema v<span id="schemaVersion"></span>. Sync, below, copies records out; a backup file is the copy that doesn't depend on Turso.</p>
         <div class="row">
-          <button type="button" class="btn" id="backupBtn">Download backup</button>
-          <button type="button" class="btn ghost" id="restoreBtn">Restore from backup…</button>
+          <button type="button" class="btn" id="backupBtn"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Download backup</button>
+          <button type="button" class="btn ghost" id="restoreBtn"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>Restore from backup…</button>
           <input type="file" id="restoreFile" accept=".json,application/json" hidden />
         </div>
         <label class="check"><input type="checkbox" id="restoreSettings" /> Also restore settings (theme, desk days, quiet hours, rollover)</label>
@@ -781,7 +932,7 @@ input[type="date"] {
             </div>
             <label class="check"><input type="checkbox" id="syncOn" disabled /> Sync this device</label>
             <p id="syncState"></p>
-            <button type="button" class="btn ghost" id="syncNow" disabled>Sync now</button>
+            <button type="button" class="btn ghost" id="syncNow" disabled><svg class="ic" aria-hidden="true"><use href="#i-refresh-cw"/></svg>Sync now</button>
           </div>
           <div class="sync-side">
             <p>Copies your logged records (breaks, check-ins, exercises, outdoor time, Rx) to your own Turso database, so the laptop and the phone see one history. Settings, a running outdoor timer and this token never leave this device.</p>
@@ -801,7 +952,10 @@ input[type="date"] {
 
 <dialog class="look" id="look" aria-labelledby="lookTitle">
   <h2 id="lookTitle">Look at something at least 6 m away</h2>
-  <p class="secs" id="lookSecs" aria-live="off">20</p>
+  <div class="look-dial">
+    <svg class="dial" viewBox="0 0 120 120" aria-hidden="true"><circle class="track" cx="60" cy="60" r="56"/><circle class="arc" id="lookArc" cx="60" cy="60" r="56" pathLength="100"/></svg>
+    <p class="secs" id="lookSecs" aria-live="off">20</p>
+  </div>
   <p class="sub">Keep looking until it reaches 0. The break logs itself, with a beep if sound is on.</p>
   <button type="button" class="btn ghost" id="lookCancel">Cancel</button>
 </dialog>
@@ -1051,7 +1205,11 @@ input[type="date"] {
     p.setAttribute("role", "status");
     p.textContent = msg;
     $("toasts").appendChild(p);
-    setTimeout(function () { p.remove(); }, 4000);
+    setTimeout(function () {
+      p.classList.add("out");
+      p.addEventListener("transitionend", function () { p.remove(); });
+      setTimeout(function () { p.remove(); }, 600);   // no transitionend if the tab is hidden
+    }, 4000);
   }
 
   /* One entry point for every reminder action, from the in-window notes and
@@ -1104,6 +1262,13 @@ input[type="date"] {
     paintLook();
     clearInterval(lookTimer);
     lookTimer = setInterval(paintLook, 200);
+    /* Restart the ring from full. It runs on its own clock (CSS), started in
+       the same frame as lookEnd, so it and the number agree. */
+    var arc = $("lookArc");
+    look.style.setProperty("--look-n", L.LOOK_SECONDS);
+    arc.classList.remove("run");
+    arc.getBoundingClientRect();
+    arc.classList.add("run");
     look.showModal();
   }
   function paintLook() {
@@ -1336,6 +1501,25 @@ input[type="date"] {
 
   /* Runs every second from the break tick, so it paints only when something
      changed: a repaint under the pointer would drop a calendar tooltip. */
+  var wasDone = null, wasDoneDay = null;
+  var BURST_N = 10;
+  function burst() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var num = $("streakNum"), b = document.createElement("span");
+    b.className = "burst";
+    b.setAttribute("aria-hidden", "true");
+    for (var i = 0; i < BURST_N; i++) {
+      var dot = document.createElement("i");
+      dot.style.setProperty("--a", (i * 360 / BURST_N) + "deg");
+      b.appendChild(dot);
+    }
+    num.appendChild(b);
+    num.classList.remove("pop");
+    num.getBoundingClientRect();
+    num.classList.add("pop");
+    setTimeout(function () { b.remove(); num.classList.remove("pop"); }, 800);
+  }
+
   function renderStreak() {
     var t = todayKey(), desk = br().days, idx = L.dayIndex(state.records);
     var s = L.streak(idx, t, desk), need = L.DONE_BREAKS;
@@ -1367,11 +1551,18 @@ input[type="date"] {
         '" title="' + label + '" aria-label="' + label + '">' + (v === "blank" ? "" : x.breaks) + "</li>";
     }
 
+    /* Burst only on the change to done, seen in this window: not on load, not
+       on a re-render of a day that was already done. */
+    var doneNow = st === "done";
+    if (doneNow && wasDone === false && wasDoneDay === t) burst();
+    wasDone = doneNow;
+    wasDoneDay = t;
+
     renderCompare(idx);   // before the stamp check: a break or check-in can change it without changing the streak
     var stamp = [s.current, today, grace, cells].join("|");
     if (stamp === streakStamp) return;
     streakStamp = stamp;
-    $("streakNum").textContent = s.current;
+    $("streakNum").firstChild.nodeValue = s.current;   // not textContent: that would drop a running burst
     $("streakLabel").textContent = s.current === 1 ? "desk day in a row" : "desk days in a row";
     $("streakToday").innerHTML = today;
     $("streakGrace").hidden = !grace;
@@ -1632,11 +1823,15 @@ input[type="date"] {
     $("odDate").textContent = fmtDay(day);
     $("odTotal").textContent = Math.floor(total / 60);
     $("odOf").textContent = "of " + target + " min";
-    $("odBar").max = target; $("odBar").value = Math.min(total / 60, target);
+    var mins = Math.min(Math.floor(total / 60), target);
+    $("odBar").setAttribute("aria-valuemax", target);
+    $("odBar").setAttribute("aria-valuenow", mins);
+    $("odArc").style.strokeDashoffset = 100 - (mins / target) * 100;
     $("odSplit").textContent = !d.entries.length ? "Nothing logged yet." :
       fmtMin(d.timed) + " timed by you" + (d.quick ? ", " + fmtMin(d.quick) + " estimated" : "") +
       (total >= target * 60 ? ". Target reached." : ".");
-    $("odToggle").textContent = running ? "Stop timer" : "Start timer";
+    $("odToggle").lastChild.textContent = running ? "Stop timer" : "Start timer";
+    $("odToggle").querySelector("use").setAttribute("href", running ? "#i-square" : "#i-play");
     $("odQuick").textContent = "+" + L.QUICK_ADD_MIN + " min";
     $("odQuickNote").textContent = "+" + L.QUICK_ADD_MIN + " min is your estimate, not a measurement, and is marked as one.";
     $("odQuick").disabled = running;   // adding time while one is timing would count it twice
@@ -1879,6 +2074,32 @@ input[type="date"] {
     }
   });
 
+  /* ---- NAV INDICATOR ------------------------------------------------------ */
+  /* Sidebar: every link is the same height, so the block only translates.
+     Bottom bar: tabs differ in width, so a 1 px block is translated and scaled
+     to the tab. Layout changes (resize, the web fonts arriving) re-place it
+     without the transition, so it never slides for a reason you didn't cause. */
+  var navInd = $("navInd");
+  function placeInd() {
+    var a = document.querySelector('.nav a[aria-current="page"]');
+    if (!a) return;
+    if (getComputedStyle(a.parentNode).flexDirection === "row") {
+      navInd.style.height = a.offsetHeight + "px";
+      navInd.style.transform = "translate(" + a.offsetLeft + "px, " + a.offsetTop + "px) scaleX(" + a.offsetWidth + ")";
+    } else {
+      navInd.style.height = a.offsetHeight + "px";
+      navInd.style.transform = "translateY(" + a.offsetTop + "px)";
+    }
+  }
+  function placeIndNow() {
+    navInd.classList.remove("ready");
+    placeInd();
+    navInd.getBoundingClientRect();
+    navInd.classList.add("ready");
+  }
+  addEventListener("resize", placeIndNow);
+  if (document.fonts) document.fonts.ready.then(placeIndNow);
+
   /* ---- ROUTER ------------------------------------------------------------- */
   function show() {
     var view = location.hash.slice(1);
@@ -1890,6 +2111,7 @@ input[type="date"] {
       if (a.getAttribute("href") === "#" + view) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
     });
+    placeInd();
     if (view === "today") renderToday();
     else if (view === "exercises") renderExercises();
     else if (view === "outdoor") renderOutdoor();
@@ -2320,6 +2542,7 @@ input[type="date"] {
   initCheckin();
   initSync();
   show();
+  placeIndNow();
   addEventListener("hashchange", show);
   /* The laptop window stays open all day; the date line must roll with it.
      Outdoor and Exercises show today's totals too, so a new day repaints the

@@ -50,7 +50,7 @@ it off again.
 | View | What it does |
 |---|---|
 | **Today** | Break count, "Look away for 20 s" (the break logs itself at 0), the day's check-in (dryness, headache, blur, 0–3), the streak with a two-week calendar, and — after 14 check-ins — symptoms on high-break days against low-break days |
-| **Exercises** | Five guided exercises (palming, blinking, near-far focus, figure-eight, eye rolls), each tagged with how much evidence there is for it, and a citation |
+| **Exercises** | Nine guided exercises (palming, blinking, near-far focus, figure-eight, eye rolls, saccade jumps, and three with a tennis ball: tracking, push-ups, toss and catch), each tagged with how much evidence there is for it, and a citation |
 | **Outdoor** | A start/stop timer and a +15 min quick-add, against a 2 h reference. Timed and estimated minutes are kept apart |
 | **Rx** | One entry per exam: sphere, cylinder and axis per eye. Spherical equivalent chart with a ±0.50 D band, the next dilated exam, and the warning signs that need care right away |
 | **Facts** | What can and can't change a prescription, when myopia counts as high, screen setup, blue-light lenses — each claim cited, each card saying whether it read the abstract or the full text |

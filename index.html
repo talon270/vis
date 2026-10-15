@@ -370,6 +370,7 @@ dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
 .ring.on { background: var(--accent); color: var(--on-accent); }
 .pair { display: flex; gap: 20px; }
 .pair .ring { width: 104px; height: 104px; font-size: 13px; }
+.pair.wide { gap: min(160px, 12vw); }
 .fig8 { width: 100%; max-width: 340px; }
 .fig8 path { fill: none; stroke: var(--muted); stroke-width: 3; }
 .fig8 circle { fill: var(--accent); }
@@ -986,7 +987,8 @@ dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
                  the evening nudge
      · STREAK    done desk days in a row, today's raw count beside it, and a
                  two-week calendar of what each day scored
-     · EXERCISES five guided exercises, each with its evidence tag and source;
+     · EXERCISES nine guided exercises, three with a tennis ball, each with
+                 its evidence tag and source;
                  a finished run logs an "exercise" event, never a break
      · OUTDOOR   start/stop timer kept as a start time in storage, +15 min
                  estimates marked as such, a forgotten-stop guard, and a banner
@@ -1611,11 +1613,12 @@ dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
   }
 
   /* ---- EXERCISES ---------------------------------------------------------- */
-  /* Five guided exercises ported from Helth's eye care view. Helth's blurbs
+  /* Nine guided exercises. The first five are ported from Helth's eye care
+     view; B16 added saccade jumps and three with a tennis ball. Helth's blurbs
      claimed what each one does to the eye ("trains the focusing muscle",
      "takes each of the six muscles through its full range"). None is
      repeated here: a blurb says what you do, and the tag says what the
-     evidence is. Both come from A6 in PLAN-vis.md, with the source beside
+     evidence is. Both come from A6 and B16 in PLAN-vis.md, with the source beside
      the tag.
 
      Each exercise supplies its stage markup, a frame(stage, elapsed, total)
@@ -1628,6 +1631,14 @@ dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
     'American Academy of Ophthalmology</a> (Repka, 2015): "There is no irrefutable (undeniable) evidence that eye exercises ' +
     'can affect uncorrected visual acuity (sharpness of vision)."';
   var doi = function (d, text) { return '<a href="https://doi.org/' + d + '" rel="noopener">' + text + "</a>"; };
+  /* B16, verified 2026-10-15 against Europe PMC abstracts; Aggarwal 2024 from
+     its full text. A subagent's first search said "no trial found" for
+     pursuit and saccades; a wider search found Aggarwal, so those two are
+     "Weak evidence" on the same terms as near-far: a trial in another
+     condition, not of screen strain. */
+  var OCULO = "No trial for screen strain. One small trial in another condition: " +
+    doi("10.1142/S101370252450001X", "Aggarwal et al., Hong Kong Physiother J 2024") + " (full text read). 32 adults aged 18–34 with chronic neck pain and visual complaints did 9 sessions of neck exercises over 3 weeks; half also did four eye exercises, a version of this one among them. " +
+    "Their visual-complaints score fell 21.4 points, against 8.9 without (p = 0.024 between groups). The paper does not say anyone was blinded, and its authors note the eye-exercise group also got more treatment time.";
 
   var EX = [
     { id: "palming", name: "Palming", secs: 60, on: false,
@@ -1731,17 +1742,134 @@ dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
         var a = (t / PERIOD) * Math.PI * 2 * (t < total / 2 ? 1 : -1) - Math.PI / 2;
         el.querySelector("i").style.transform = "translate(" + Math.cos(a) * R + "px," + Math.sin(a) * R + "px)";
       },
-      cue: function (t, total) { return t < total / 2 ? "Clockwise. Head still, eyes wide." : "Now counter-clockwise."; } }
+      cue: function (t, total) { return t < total / 2 ? "Clockwise. Head still, eyes wide." : "Now counter-clockwise."; } },
+
+    { id: "saccades", name: "Saccade jumps", secs: 45, on: false,
+      tag: "Weak evidence",
+      src: OCULO,
+      desc: "Jump your eyes between two circles as the light switches, once a second. Head still.",
+      steps: [
+        "Keep your head still. Only your eyes move.",
+        "Look at the lit circle. When the other one lights, jump your eyes to it.",
+        "Land on it and hold until the next switch.",
+        "If your eyes tire, blink. Don't strain."
+      ],
+      stage: '<div class="pair wide"><div class="ring">LEFT</div><div class="ring">RIGHT</div></div>',
+      frame: function (el, t) {
+        var left = Math.floor(t) % 2 === 0, r = el.querySelectorAll(".ring");
+        r[0].classList.toggle("on", left);
+        r[1].classList.toggle("on", !left);
+      },
+      cue: function () { return "Jump to the lit circle. Head still."; } },
+
+    /* The tennis-ball exercises. Your eyes are on the ball, not the screen,
+       so the stage is only a first-glance picture and each switch beeps. */
+    { id: "balltrack", name: "Ball tracking", secs: 60, on: false, ball: true,
+      tag: "Weak evidence",
+      src: OCULO,
+      desc: "Move a tennis ball slowly in front of you and follow it with your eyes: side to side, up and down, then a circle each way.",
+      steps: [
+        "Hold the ball at arm's length, level with your eyes.",
+        "Move it slowly, about a second from one side to the other. Head still; only your eyes follow it.",
+        "At each beep, change pattern: side to side, up and down, a circle clockwise, a circle counter-clockwise.",
+        "Keep the ball sharp. If it blurs, slow down."
+      ],
+      stage: '<svg class="fig8" viewBox="0 0 400 200"><circle cx="200" cy="100" r="9"/></svg>',
+      frame: function (el, t) {
+        var ph = Math.min(3, Math.floor(t / 15)), a = t * Math.PI * 2 / 2.4;   // 15 s a pattern; 2.4 s a sweep
+        var x = 200, y = 100;
+        if (ph === 0) x += 150 * Math.sin(a);
+        else if (ph === 1) y += 80 * Math.sin(a);
+        else { a *= ph === 2 ? 1 : -1; x += 80 * Math.cos(a); y += 80 * Math.sin(a); }   // y grows down, so +a is clockwise
+        onSwitch(el, ph);
+        var dot = el.querySelector("circle");
+        dot.setAttribute("cx", x);
+        dot.setAttribute("cy", y);
+      },
+      cue: function (t) {
+        return ["Side to side.", "Up and down.", "A circle, clockwise.", "A circle, counter-clockwise."][Math.min(3, Math.floor(t / 15))] + " Head still.";
+      } },
+
+    { id: "ballpush", name: "Ball push-ups", secs: 60, on: false, ball: true,
+      tag: "No better than placebo",
+      src: "Tested as pencil push-ups, for convergence insufficiency (the eyes struggle to turn in for near work), not for screen strain. In adults (" +
+        doi("10.1097/01.opx.0000171331.36871.2f", "Scheiman et al., Optom Vis Sci 2005") + ", 46 aged 19–30, 12 weeks), symptoms were gone in 20% with home push-ups, against 31% with placebo therapy and 42% with office therapy. In children (" +
+        doi("10.1001/archopht.126.10.1336", "CITT Study Group, Arch Ophthalmol 2008") + ", 221 aged 9–17), the symptom score after push-ups was 24.7, against 21.9 with placebo; lower is better. Neither abstract reports a test between push-ups and placebo.",
+      desc: "Bring a tennis ball slowly toward your nose until it doubles, then take it back out.",
+      steps: [
+        "Hold the ball at arm's length, level with your eyes. Look at one small spot on it: a letter you've written, or the seam.",
+        "On IN, bring it slowly toward your nose over 5 seconds. Keep it single.",
+        "If it doubles, stop there. On OUT, take it back to arm's length.",
+        "If your eyes ache, stop."
+      ],
+      stage: '<div class="pair"><div class="ring">IN</div><div class="ring">OUT</div></div>',
+      frame: function (el, t, total) {
+        /* Clamped so the last frame at 0:00 doesn't flip to IN and beep over the finish chime. */
+        var inward = Math.floor(Math.min(t, total - 1) / 5) % 2 === 0, r = el.querySelectorAll(".ring");
+        r[0].classList.toggle("on", inward);
+        r[1].classList.toggle("on", !inward);
+        onSwitch(el, inward);
+      },
+      cue: function (t) {
+        return Math.floor(t / 5) % 2 === 0 ? "In: slowly toward your nose. Stop if it doubles." : "Out: back to arm's length.";
+      } },
+
+    { id: "balltoss", name: "Toss and catch", secs: 60, on: false, ball: true,
+      tag: "No evidence",
+      src: "No trial of catching for eye strain was found, and none of letters read off a moving ball. Sports-vision training in healthy athletes, as a battery of drills, not one, improved response time in sport tasks: " +
+        doi("10.1007/s44402-026-00147-8", "Vera et al., Ophthalmic Physiol Opt 2026") + " (meta-analysis of 14 studies; heterogeneity I² 92%). On the risk: in " +
+        doi("10.1016/j.ophtha.2015.07.014", "Daien et al., Ophthalmology 2015") + " (2.68 million eyes after cataract surgery, all over 40), retinal detachment was more likely with high myopia (hazard ratio 6.12) and with past eye trauma (3.98). That is not a young-adult group, and it does not split trauma by myopia.",
+      note: 'Toss soft and low, below your chin, never toward your face, and away from the laptop. A hit to the eye and high myopia both raise the risk of retinal detachment: the warning signs are on <a href="#rx">Rx</a>.',
+      desc: "Toss a tennis ball from hand to hand and watch it all the way in: 30 seconds with two hands, then 30 with one.",
+      steps: [
+        "Stand clear of the laptop and anything that breaks.",
+        "Toss the ball underhand from one hand to the other in a low arc. Watch it all the way into your hand.",
+        "At the beep, switch to one hand: toss it up a little and catch it in the same hand.",
+        "Optional: write letters on the ball with a marker, and say the one facing you as you catch it."
+      ],
+      stage: '<svg class="fig8" viewBox="0 0 400 200"><path d="M60 170 Q 200 -10 340 170"/><circle cx="60" cy="170" r="9"/></svg>',
+      frame: function (el, t, total) {
+        var one = t >= total / 2, path = el.querySelector("path"), dot = el.querySelector("circle");
+        var d = one ? "M200 175 L200 45" : "M60 170 Q 200 -10 340 170";
+        if (path.getAttribute("d") !== d) path.setAttribute("d", d);
+        onSwitch(el, one);
+        var TOSS = 1.5, f = (t % TOSS) / TOSS;   // seconds a toss
+        /* Two hands: across, then back. One hand: up and down the same line. */
+        var at = one ? Math.sin(Math.PI * f) : Math.floor(t / TOSS) % 2 ? 1 - f : f;
+        var p = path.getPointAtLength(at * path.getTotalLength());
+        dot.setAttribute("cx", p.x);
+        dot.setAttribute("cy", p.y);
+      },
+      cue: function (t, total) {
+        return t < total / 2 ? "Hand to hand, a low arc. Watch it all the way in." : "One hand: toss it up a little and catch it.";
+      } }
   ];
+
+  /* A beep when a ball exercise changes step: you are watching the ball, not
+     the screen. The first call only records the step. It is kept on the
+     stage's root, which runEx rebuilds every run: on the stage itself, a
+     second ball run would beep at 0:00 over the previous run's last step. */
+  function onSwitch(el, step) {
+    var k = String(step), root = el.firstElementChild;
+    if (root.dataset.step !== k) {
+      if (root.dataset.step) beep(700, 90, 0.12);
+      root.dataset.step = k;
+    }
+  }
 
   function mmss(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
 
   function renderExercises() {
     var n = L.countExercises(state.records, todayKey());
+    /* Sound is on by default but set per device, and Settings can turn it
+       off. It is never switched back on for you; a ball card says when
+       nothing will mark the switches. */
+    var mute = br().sound ? "" : '<p class="note">Sound is off, so nothing marks the switches while you watch the ball. Turn it on in <a href="#settings">Settings</a>.</p>';
     $("exCards").innerHTML = EX.map(function (x) {
       return '<div class="card ex-card"><div class="ex-meta"><h2>' + x.name + '</h2><span class="tag' + (x.on ? " on" : "") +
         '">' + x.tag + "</span></div>" +
         "<p>" + x.desc + " " + mmss(x.secs) + ".</p>" +
+        (x.note ? '<p class="note">' + x.note + "</p>" : "") + (x.ball ? mute : "") +
         '<ol class="ex-steps">' + x.steps.map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</ol>" +
         '<p class="ex-src">' + x.src + "</p>" +
         '<div class="ex-foot"><button type="button" class="btn" data-ex="' + x.id + '">Start</button>' +
@@ -2099,6 +2227,11 @@ dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
   }
   addEventListener("resize", placeIndNow);
   if (document.fonts) document.fonts.ready.then(placeIndNow);
+  /* The 600 face loads on first use, and its decode stalls that layout by
+     50-80 ms (measured): the nav slide to the first view with semi-bold text
+     (the exercise notes) started that much late. Loading it at startup
+     moves the cost off the click. */
+  if (document.fonts) document.fonts.load('600 1em "IBM Plex Mono"');
 
   /* ---- ROUTER ------------------------------------------------------------- */
   function show() {

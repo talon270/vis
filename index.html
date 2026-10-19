@@ -2661,6 +2661,17 @@ dialog.look .secs.sm { font-size: 56px; margin: 4px 0; }
     if (e.key !== KEY || e.newValue == null) return;
     try { state = L.migrate(JSON.parse(e.newValue)); } catch (err) { return; }
     if (br().enabled !== !!startedAt) { if (br().enabled) startReminders(); else stopReminders(); }
+    /* A break taken in the other window restarts this window's cycle too.
+       Without this, this window still fires on its own schedule, minutes
+       after the break you just took. */
+    var lastBreak = state.records.reduce(function (m, r) {
+      return r.kind === "break" && !r.deletedAt && r.at > m ? r.at : m;
+    }, 0);
+    if (startedAt && lastBreak + INTERVAL_MS > nextAt) {
+      nextAt = lastBreak + INTERVAL_MS;
+      snoozeUntil = 0;
+      dropReminder();
+    }
     paintSettings();
     paintSync();
     applyTheme();
